@@ -1,28 +1,35 @@
-import uuid
-import os
-import requests
-import json
-import pyotp
-import qrcode
-
+'''The main application module'''
 from getpass import getpass
 from datetime import datetime, timedelta
 
+import uuid
+import os
+import json
+import requests
+import pyotp
+import qrcode
+
 class MainApp:
+    '''The main application'''
     def __init__(self):
-        self.session_id = str(uuid.uuid4())
-        self.session_start_at = datetime.now()
-        self.session_expired_at = self.session_start_at + timedelta(minutes=30)
-        self.session_start_at_str = self.session_start_at.strftime("%Y-%m-%dT%H:%M:%S")
-        self.session_expired_at_str = self.session_expired_at.strftime("%Y-%m-%dT%H:%M:%S")
-
-        self.user_id = None
-        self.user_name = None
-        self.auth_token = None
-
+        now = datetime.now()
+        expired_at =  now + timedelta(minutes=30)
+        self.session = {
+            'id': str(uuid.uuid4()),
+            'start_at': now,
+            'start_at_str': now.strftime("%Y-%m-%dT%H:%M:%S"),
+            'expired_at': expired_at,
+            'expired_at_str': expired_at.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        self.user = {
+            'id': None,
+            'name': None,
+            'auth_token': None,
+        }
         self.homepage()
 
     def switch_menu(self, activity, **kwargs):
+        '''Switch menu based on the current activity'''
 
         os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -36,6 +43,7 @@ class MainApp:
             self.setup_tfa(**kwargs)
 
     def homepage(self):
+        '''Display the home page'''
         print('Welcome!\n')
         print('1. Login')
         print('2. Register\n')
@@ -55,6 +63,7 @@ class MainApp:
         return self.switch_menu(menu_dict[user_input])
 
     def registration_page(self):
+        '''Display the registration page'''
 
         status_code = None
 
@@ -89,13 +98,13 @@ class MainApp:
                 "secondary_password": user_secondary_password
             }
 
-            r = requests.post(
+            http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
 
-            response = json.loads(r.content)
+            response = json.loads(http_response.content)
             status_code = response.get('code')
             message = response.get('message')
 
@@ -109,11 +118,13 @@ class MainApp:
 
         if setup_tfa == 'y':
             return self.switch_menu(activity='setup_tfa', user_email=user_email)
-        else:
-            user_input = input('Press enter to go back to homepage...')
-            return self.switch_menu('homepage')
+
+        # Comment out because it is an unused variable
+        # user_input = input('Press enter to go back to homepage...')
+        return self.switch_menu('homepage')
 
     def login_page(self):
+        '''Display the login page'''
         status_code = 0
         attempt = 0
         is_tfa_enabled = False
@@ -125,24 +136,24 @@ class MainApp:
             http_payload = {
                 'email': email,
                 'password': password,
-                'session_id': self.session_id
+                'session_id': self.session['id'],
             }
 
-            r = requests.post(
+            http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/user_login',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
 
-            response = json.loads(r.content)
+            response = json.loads(http_response.content)
             status_code = response.get('code')
-            message = response.get('message')
+            # message = response.get('message') # Comment out because it is an unused variable
             data = response.get('data')
 
             if data:
                 tmp_auth_token = data.get("auth_token")
-                self.user_id = data.get('user_id')
-                self.user_name = data.get('user_name')
+                self.user['id'] = data.get('user_id')
+                self.user['name'] = data.get('user_name')
                 is_tfa_enabled = data.get('is_tfa_enabled')
 
             if status_code != 200:
@@ -150,26 +161,27 @@ class MainApp:
                 self.switch_menu('homepage')
 
             if is_tfa_enabled:
-                query = (
-                    f"""
-                    SELECT tfa_scret FROM secured.users
-                    WHERE user_id = {self.user_id}
-                    """
-                )
+                # Comment out because it is an unused variable
+                # query = (
+                #     f"""
+                #     SELECT tfa_scret FROM secured.users
+                #     WHERE user_id = {self.user_id}
+                #     """
+                # )
 
                 http_payload = {
-                    'user_id': self.user_id
+                    'user_id': self.user['id']
                 }
 
-                r = requests.post(
+                http_response = requests.post(
                     'https://us-central1-ssd-136542.cloudfunctions.net/verify_otp',
                     headers={"Content-Type": "application/json"},
                     data=json.dumps(http_payload)  # possible request parameters
                 )
 
-                response = json.loads(r.content)
+                response = json.loads(http_response.content)
                 status_code = response.get('code')
-                message = response.get('message')
+                # message = response.get('message') # Comment out because it is an unused variable
                 data = response.get('data')
                 tfa_secret = data.get('tfa_secret')
                 print(tfa_secret)
@@ -190,11 +202,12 @@ class MainApp:
                     attempt = attempt + 1
 
                 if passed:
-                    self.auth_token = tmp_auth_token
-                    print(f"Hi {self.user_name}! You are logged in, yay!")
+                    self.user['auth_token'] = tmp_auth_token
+                    print(f"Hi {self.user['name']}! You are logged in, yay!")
             attempt = attempt + 1
 
     def setup_tfa(self, **kwargs):
+        '''Set up the two factor authentication for users'''
         user_email = kwargs.get('user_email')
         base32secret = pyotp.random_base32()
 
@@ -203,13 +216,13 @@ class MainApp:
             issuer_name="Secure App")
 
         # Creating an instance of qrcode
-        qr = qrcode.QRCode(
+        qr_code = qrcode.QRCode(
             version=1,
             box_size=10,
             border=5)
-        qr.add_data(totp_uri)
-        qr.make(fit=True)
-        img = qr.make_image(fill='black', back_color='white')
+        qr_code.add_data(totp_uri)
+        qr_code.make(fit=True)
+        img = qr_code.make_image(fill='black', back_color='white')
 
         totp = pyotp.TOTP(base32secret)
         print("Prepare your phone and be ready to scan an image with your authentication app.")
@@ -222,7 +235,6 @@ class MainApp:
 
         while passed is False and attempt < 3:
             otp_input = input("Enter the code: ")
-            str(otp_input) != str(totp.now())
 
             if str(otp_input) != str(totp.now()):
                 print("The entered code is wrong, please try again.")
@@ -243,24 +255,16 @@ class MainApp:
                 'email': user_email
             }
 
-            r = requests.post(
+            http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/setup_otp',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
 
-            response = json.loads(r.content)
+            response = json.loads(http_response.content)
             message = response.get('message')
 
             print(message)
             input('Success! Press enter to go to homepage.')
 
         return self.switch_menu(activity='homepage')
-
-
-
-
-
-
-
-
