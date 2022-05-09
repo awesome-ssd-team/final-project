@@ -24,24 +24,25 @@ repos:
     rev: pylint-2.6.0
     hooks:
     -   id: pylint
+        entry: ./env/bin/pylint
         args:
         - --rcfile=.pylintrc
 
--   repo: local
-    hooks:
-    -   id: pytest-check
-        name: pytest-check
-        stages: [commit]
-        types: [python]
-        entry: pytest
-        language: system
-        pass_filenames: false
-        always_run: true
-        args:
-        - --cov=./ tests/
+# -   repo: local
+#     hooks:
+#     -   id: pytest-check
+#         name: pytest-check
+#         stages: [commit]
+#         types: [python]
+#         entry: pytest
+#         language: system
+#         pass_filenames: false
+#         always_run: true
+#         args:
+#         - --cov=./ tests/
 
-repos:
--   repo: https://github.com/PyCQA/bandit
-    rev: '1.7.4'
-    hooks:
-    - id: bandit
+# repos:
+# -   repo: https://github.com/PyCQA/bandit
+#     rev: '1.7.4'
+#     hooks:
+#     - id: bandit
