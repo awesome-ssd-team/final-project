@@ -29,7 +29,7 @@ def main(request):
     # Get entered user_id & name (if any)
     query = (
         f"""
-        SELECT 
+        SELECT
             user_id,
             SUBSTRING_INDEX(full_name, ' ', 1) AS user_name,
             is_tfa_enabled
@@ -42,13 +42,13 @@ def main(request):
     user_id_result = cursor.fetchone()
     user_id = user_id_result.get('user_id') if user_id_result else None
     user_name = user_id_result.get('user_name') if user_id_result else None
-    is_tfa_enabled = bool(user_id_result.get('user_name')) if user_id_result else None
+    is_tfa_enabled = bool(user_id_result.get('is_tfa_enabled')) if user_id_result else None
 
     # Check if credentials is blocked
     query = (
         f"""
-            SELECT TRUE AS is_blocked 
-            FROM backend.blocked_session 
+            SELECT TRUE AS is_blocked
+            FROM backend.blocked_session
                 WHERE (
                     session_id = '{session_id}' OR user_id = {user_id}
                 )
