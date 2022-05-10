@@ -1,4 +1,5 @@
 '''The main application module'''
+# pylint: disable=invalid-name
 from getpass import getpass
 from datetime import datetime, timedelta
 
