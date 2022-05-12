@@ -1,3 +1,5 @@
+# pylint: disable=invalid-name
+# pylint: disable=duplicate-code
 '''The Cloud Functions module for handling user registration'''
 import os
 import mysql.connector
@@ -7,7 +9,6 @@ def main(request):
     request_json = request.get_json()
 
     # Connect to MySQL
-    # pylint: disable=invalid-name
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
     MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')

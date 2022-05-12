@@ -1,11 +1,11 @@
-'''The unit test cases for the register user module'''
 # pylint: disable=no-self-use
+'''The unit test cases for the register user module'''
 from unittest.mock import Mock
 import pytest
 
 from scripts.cloud_functions_api import register_user
 
-@pytest.mark.usefixtures("turncate_users")
+@pytest.mark.usefixtures('turncate_users')
 class TestRegisterUser:
     '''The unit test cases group'''
 
