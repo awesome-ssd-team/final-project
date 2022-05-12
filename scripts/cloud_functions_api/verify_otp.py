@@ -1,11 +1,16 @@
+# pylint: disable=invalid-name
+# pylint: disable=duplicate-code
+'''The Cloud Functions module for handling verifying OTP'''
 import os
 import mysql.connector
 
 def main(request):
+    '''The main function of handling the verifying OTP request'''
     request_json = request.get_json()
 
     # Connect to MySQL
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
+    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
 
@@ -13,7 +18,7 @@ def main(request):
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database='secured'
+        database=MYSQL_DATABASE,
     )
 
     cursor = conn.cursor(dictionary=True)
@@ -23,7 +28,7 @@ def main(request):
 
     query = (
         f"""
-        SELECT tfa_secret FROM secured.users
+        SELECT tfa_secret FROM {MYSQL_DATABASE}.users
         WHERE user_id = {user_id}
         """
     )
@@ -41,8 +46,7 @@ def main(request):
                 'tfa_secret': tfa_secret
             }
         }
-    else:
-        return {
-            'code': 406,
-            'message': 'TFA secret not found.'
-        }
+    return {
+        'code': 406,
+        'message': 'TFA secret not found.'
+    }

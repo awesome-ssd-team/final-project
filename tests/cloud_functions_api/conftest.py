@@ -63,8 +63,10 @@ def create_a_testing_user_account():
 
     query = (
         f"""
-        INSERT INTO {MYSQL_DATABASE}.users (password, full_name, email, secondary_password)
-        VALUES ('{password}', '{full_name}', '{email}', '{secondary_password}');
+        INSERT INTO {MYSQL_DATABASE}.users
+            (password, full_name, email, secondary_password, tfa_secret)
+        VALUES
+            ('{password}', '{full_name}', '{email}', '{secondary_password}', '654321');
         """
     )
 
