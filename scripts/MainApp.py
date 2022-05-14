@@ -44,7 +44,7 @@ class MainApp:
         elif activity == 'action':
             self.action_page()
         elif activity == 'add':
-            self.setup_tfa()
+            self.add_page()
         elif activity == 'update':
             self.update_page()
         elif activity == 'delete':
@@ -86,7 +86,7 @@ class MainApp:
                 'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
-            )           
+            )
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
@@ -99,7 +99,7 @@ class MainApp:
 
         '''Display the action page'''
         print('What action you would like to take?')
-        print('1. Add Data (Opening soon)')
+        print('1. Add Data')
         print('2. update Data')
         print('3. Delete Data (Opening soon)\n')
         user_action_input = '0'
@@ -203,8 +203,9 @@ class MainApp:
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
-            # message = response.get('message') # Comment out because it is an unused variable
+            message = response.get('message')
             data = response.get('data')
+            print(message)
 
             if data:
                 tmp_auth_token = data.get("auth_token")
@@ -260,7 +261,11 @@ class MainApp:
                 if passed:
                     self.user['auth_token'] = tmp_auth_token
                     print(f"Hi {self.user['name']}! You are logged in, yay!")
+                    input('Success! Press enter to proceed.')
                     return self.switch_menu(activity='action')
+            else:
+                input('Success! Press enter to proceed.')
+                return self.switch_menu(activity='action')
             attempt = attempt + 1
 
     def setup_tfa(self, **kwargs):
@@ -326,6 +331,39 @@ class MainApp:
 
         return self.switch_menu(activity='homepage')
 
+    def add_page(self):
+        '''Display the add data page'''
+        status_code = 0
+        data_value = 0
+        data_details = ''
+
+
+        while status_code != 200:
+            while not data_value:
+                data_value = input("Enter data value:")
+            while not data_details:
+                data_details = input("Enter data details:")
+
+            http_payload = {
+                "user_id": self.user['id'],
+                'data_value': int(data_value),
+                'data_details': data_details
+            }
+
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/add_data',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            message = response.get('message')
+            print(message)
+
+        input("Press any key to proceed: ")
+        return self.switch_menu(activity='action')
+
     def update_page(self):
         '''Display the update page'''
         status_code = 0
@@ -337,18 +375,18 @@ class MainApp:
 
         while status_code != 200:
             print("Which data do you want to update?")
-            data_id = input("Enter data id: ") 
+            data_id = input("Enter data id: ")
 
             while int(update_action) not in [1, 2]:
                 print("I want to update... (1)data value (2)data details:")
                 update_action = input("Please Enter 1 or 2: ")
                 if int(update_action) not in [1, 2]:
                     print('Input is invalid...\n')
-            
+
             if update_action == '1':
                 data_value = input("Enter new data value. (Number only): ")
 
-                
+
             elif update_action == '2':
                 data_details = input("Enter new data details: ")
 

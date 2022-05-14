@@ -32,10 +32,10 @@ def main(request):
 
         query = (
             f"""
-            UPDATE secured.business_data 
+            UPDATE secured.business_data
             SET data_value = {data_value},
                 last_modified = CURRENT_TIMESTAMP()
-            WHERE user_id = {user_id} AND data_id = {data_id}
+            WHERE user_id = {user_id} AND data_id = '{data_id}'
             """
         )
 
@@ -66,10 +66,10 @@ def main(request):
         # Add attempt to user_login_logs
         query = (
             f"""
-            UPDATE secured.business_data 
+            UPDATE secured.business_data
             SET data_details = '{data_details}',
                 last_modified = CURRENT_TIMESTAMP()
-            WHERE user_id = {user_id} AND data_id = {data_id}
+            WHERE user_id = {user_id} AND data_id = '{data_id}'
             """
         )
         cursor.execute(query)
