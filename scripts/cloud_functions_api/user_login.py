@@ -147,7 +147,7 @@ def main(request):
     attempt_result = cursor.fetchone()
     attempt_made = attempt_result.get('more_than_three')
 
-    if int(attempt_made) >= 3:
+    if int(attempt_made) == 1:
         query = (
             f"""
             INSERT INTO {BACKEND_DATABASE}.blocked_session
