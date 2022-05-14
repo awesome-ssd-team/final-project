@@ -1,6 +1,6 @@
-'''The common fixture module'''
 # pylint: disable=invalid-name
 # pylint: disable=duplicate-code
+'''The common fixture module'''
 import os
 import pytest
 import mysql.connector
