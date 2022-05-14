@@ -84,14 +84,39 @@ def main(request):
             }
         }
 
-        query2 = (
+    # THIS IS A UPDATE ACTION THAT DELETES AN ENTRY - BUT IN DB IT SIMPLY PUTS THE is_active = 0, THUS TECHNICALLY AN UPDATE...
+    elif update_action == '3':
+        
+        query = (
             f"""
-            INSERT INTO secured.user_activity_log (user_id, data_id, activity,last_modified)
-            VALUES (
-                {user_id}, {data_id}, {activity_2}, CURRENT_TIMESTAMP()
-            );
+            UPDATE secured.business_data 
+            SET is_valid = '0',
+                last_modified = CURRENT_TIMESTAMP()
+            WHERE user_id = {user_id} AND data_id = {data_id}
             """
         )
-        cursor.execute(query2)
+        cursor.execute(query)
         conn.commit()
+        #activity_3 = 'data entry {data_id} is deleted'
+
+        return {
+            'code': 200,
+            'message': f'Data id {data_id} is deleted by user {user_id}!',
+            'data': {
+                "user_id": user_id,
+            }
+        }
+
+
+
+        #query2 = (
+        #    f"""
+        #    INSERT INTO secured.user_activity_log (user_id, data_id, activity,last_modified)
+        #    VALUES (
+        #        {user_id}, {data_id}, {activity_2}, CURRENT_TIMESTAMP()
+        #    );
+        #    """
+        #)
+        #cursor.execute(query2)
+        #conn.commit()
 

@@ -32,7 +32,7 @@ class MainApp:
         '''Switch menu based on the current activity'''
 
         os.system('cls' if os.name == 'nt' else 'clear')
-
+        #print("KWARGS:",kwargs)
         if activity == 'homepage':
             self.homepage()
         elif activity == 'register':
@@ -46,9 +46,9 @@ class MainApp:
         elif activity == 'add':
             self.setup_tfa()
         elif activity == 'update':
-            self.update_page()
+            self.update_page(**kwargs)
         elif activity == 'delete':
-            self.xxx()
+            self.delete_data(**kwargs)
 
     def homepage(self):
         '''Display the home page'''
@@ -74,7 +74,9 @@ class MainApp:
         '''Display the data view'''
         status_code = None
 
+        print('='*40)
         print('***Data View***')
+        print('='*40)
         while status_code != 200:
 
             http_payload = {
@@ -92,16 +94,28 @@ class MainApp:
             status_code = response.get('code')
             message = response.get('message')
             data = response.get('data')
-
+            kwargs = data
             #print(status_code)
             #print(message)
-            print(data)
+            print()
+            print()
+            if data:
+                for i in data:
+                    print("ID:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+            else:
+                print("No data entries for this user.")
+            #print(data)
+            print()
+            print()
 
         '''Display the action page'''
+        print('='*40)
         print('What action you would like to take?')
+        print('='*40)
+        print()
         print('1. Add Data (Opening soon)')
-        print('2. update Data')
-        print('3. Delete Data (Opening soon)\n')
+        print('2. Update Data')
+        print('3. Delete Data\n')
         user_action_input = '0'
 
         # Repeat until valid input
@@ -115,8 +129,16 @@ class MainApp:
             '2': 'update',
             '3': 'delete'
         }
-
-        return self.switch_menu(menu_dict[user_action_input])
+        #if user_action_input == '3':
+        #    self.delete_data(data)
+        #elif user_action_input == '2':
+        #    self.update_page(data)
+        print("DATA: ",data)
+        
+        kwargs = {}
+        for i in data:
+            kwargs[str(i.get('data_id'))]=i
+        return self.switch_menu(menu_dict[user_action_input], **kwargs)
 
     def registration_page(self):
         '''Display the registration page'''
@@ -326,8 +348,30 @@ class MainApp:
 
         return self.switch_menu(activity='homepage')
 
-    def update_page(self):
+    def update_page(self, **kwargs):
         '''Display the update page'''
+        response = []
+        for key, value in kwargs.items():
+            response.append(value)
+
+        print("LIST OF CURRENT DATA ENTRIES:")
+        print()
+        if not response:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+
+        print('='*40)
+        for i in response:
+            if i.get('is_valid') == 1:
+                print("ID:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+                #id_list.append(i.get('data_id'))
+            else:
+                print("No active data entries for this user.")
+                input("Press any key to return...")
+                self.switch_menu(activity='action')
+        print('='*40)
+
         status_code = 0
         update_action = 0
         data_value = 0
@@ -337,7 +381,7 @@ class MainApp:
 
         while status_code != 200:
             print("Which data do you want to update?")
-            data_id = input("Enter data id: ") 
+            data_id = input("Enter data ID: ") 
 
             while int(update_action) not in [1, 2]:
                 print("I want to update... (1)data value (2)data details:")
@@ -375,5 +419,73 @@ class MainApp:
 
         next = input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
+
+    def delete_data(self, **kwargs):
+        '''Display the delete_data page'''
+        os.system('cls' if os.name == 'nt' else 'clear')
+        #UNPACK KWARGS:
+        response = []
+        for key, value in kwargs.items():
+            response.append(value)
+
+        id_list = []
+        print("LIST OF CURRENT DATA ENTRIES:")
+        print()
+        if not response:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+
+        print('='*40)
+        for i in response:
+            if i.get('is_valid') == 1:
+                print("ID:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+                id_list.append(i.get('data_id'))
+            else:
+                print("No active data entries for this user.")
+                input("Press any key to return...")
+                self.switch_menu(activity='action')
+        print('='*40)
+
+        print()
+
+        status_code = 0
+
+        while status_code != 200:
+            print("Which data entry do you want to delete?")
+            #DO QUERY HERE TO DISPLAY DATA ENTRIES... OR DO THE QUERY ON TOP...
+            data_id = input("Enter data ID: ") 
+
+            while int(data_id) not in id_list:
+                print("Invalid ID entered")
+                data_id = input("Please Enter the Data ID as displayed in the Data View:")
+            print()
+
+            http_payload = {
+                "user_id": self.user['id'],
+                'data_id': data_id,
+                'update_action': '3',
+            }
+
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/update_data',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+            
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            message = response.get('message')
+
+            print(message)
+
+        next = input("Press any key to proceed: ")
+        return self.switch_menu(activity='action')
+
+
+
+
+        self.action_page()
+
 
 
