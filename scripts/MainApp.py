@@ -41,6 +41,14 @@ class MainApp:
             self.login_page()
         elif activity == 'setup_tfa':
             self.setup_tfa(**kwargs)
+        elif activity == 'action':
+            self.action_page()
+        elif activity == 'add':
+            self.setup_tfa()
+        elif activity == 'update':
+            self.update_page()
+        elif activity == 'delete':
+            self.xxx()
 
     def homepage(self):
         '''Display the home page'''
@@ -61,6 +69,54 @@ class MainApp:
         }
 
         return self.switch_menu(menu_dict[user_input])
+
+    def action_page(self):
+        '''Display the data view'''
+        status_code = None
+
+        print('***Data View***')
+        while status_code != 200:
+
+            http_payload = {
+                "user_id": self.user['id']
+            }
+
+            http_response = requests.post(
+                #'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
+                'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )           
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            message = response.get('message')
+            data = response.get('data')
+
+            #print(status_code)
+            #print(message)
+            print(data)
+
+        '''Display the action page'''
+        print('What action you would like to take?')
+        print('1. Add Data (Opening soon)')
+        print('2. update Data')
+        print('3. Delete Data (Opening soon)\n')
+        user_action_input = '0'
+
+        # Repeat until valid input
+        while int(user_action_input) not in [1, 2, 3]:
+            user_action_input = input('Please select a menu: ')
+            if int(user_action_input) not in [1, 2, 3]:
+                print('Input is invalid...\n')
+
+        menu_dict = {
+            '1': 'add',
+            '2': 'update',
+            '3': 'delete'
+        }
+
+        return self.switch_menu(menu_dict[user_action_input])
 
     def registration_page(self):
         '''Display the registration page'''
@@ -204,6 +260,7 @@ class MainApp:
                 if passed:
                     self.user['auth_token'] = tmp_auth_token
                     print(f"Hi {self.user['name']}! You are logged in, yay!")
+                    return self.switch_menu(activity='action')
             attempt = attempt + 1
 
     def setup_tfa(self, **kwargs):
@@ -268,3 +325,55 @@ class MainApp:
             input('Success! Press enter to go to homepage.')
 
         return self.switch_menu(activity='homepage')
+
+    def update_page(self):
+        '''Display the update page'''
+        status_code = 0
+        update_action = 0
+        data_value = 0
+        data_details = 'text'
+
+        is_tfa_enabled = False
+
+        while status_code != 200:
+            print("Which data do you want to update?")
+            data_id = input("Enter data id: ") 
+
+            while int(update_action) not in [1, 2]:
+                print("I want to update... (1)data value (2)data details:")
+                update_action = input("Please Enter 1 or 2: ")
+                if int(update_action) not in [1, 2]:
+                    print('Input is invalid...\n')
+            
+            if update_action == '1':
+                data_value = input("Enter new data value. (Number only): ")
+
+                
+            elif update_action == '2':
+                data_details = input("Enter new data details: ")
+
+            http_payload = {
+                "user_id": self.user['id'],
+                'data_id': data_id,
+                'update_action': update_action,
+                'data_value': data_value,
+                'data_details': data_details
+            }
+
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/update_data',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            message = response.get('message')
+
+            #print(status_code)
+            print(message)
+
+        next = input("Press any key to proceed: ")
+        return self.switch_menu(activity='action')
+
+
