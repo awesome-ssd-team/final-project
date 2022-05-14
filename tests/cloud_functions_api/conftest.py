@@ -8,15 +8,15 @@ import mysql.connector
 def _fetch_database_connection():
     '''Establish a database connection'''
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
     return mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database=MYSQL_DATABASE,
+        database=SECURED_DATABASE,
     )
 
 def _generate_fake_user_data() -> dict[str, str]:
@@ -52,14 +52,14 @@ def turncate_backend_users():
 @pytest.fixture(scope='class')
 def turncate_users():
     '''Clear all user records from the testing database'''
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
-    print(f'Turncating all user records from the {MYSQL_DATABASE}.users table.')
+    print(f'Turncating all user records from the {SECURED_DATABASE}.users table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
 
-    query = f"TRUNCATE {MYSQL_DATABASE}.users;"
+    query = f"TRUNCATE {SECURED_DATABASE}.users;"
 
     cursor.execute(query)
     conn.commit()
@@ -68,9 +68,9 @@ def turncate_users():
 @pytest.fixture(scope='class')
 def create_a_testing_user_account():
     '''Create a testing user account'''
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
-    print(f'Creating a fake user record to the {MYSQL_DATABASE}.users table.')
+    print(f'Creating a fake user record to the {SECURED_DATABASE}.users table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -83,7 +83,7 @@ def create_a_testing_user_account():
 
     query = (
         f"""
-        INSERT INTO {MYSQL_DATABASE}.users
+        INSERT INTO {SECURED_DATABASE}.users
             (password, full_name, email, secondary_password, tfa_secret)
         VALUES
             ('{password}', '{full_name}', '{email}', '{secondary_password}', '654321');

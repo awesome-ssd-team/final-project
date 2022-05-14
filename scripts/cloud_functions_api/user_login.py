@@ -11,16 +11,16 @@ def main(request):
 
     # Connect to MySQL
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
     BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
 
     conn = mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database=MYSQL_DATABASE,
+        database=SECURED_DATABASE,
     )
 
     cursor = conn.cursor(dictionary=True)
@@ -41,7 +41,7 @@ def main(request):
             user_id,
             SUBSTRING_INDEX(full_name, ' ', 1) AS user_name,
             is_tfa_enabled
-        FROM {MYSQL_DATABASE}.users
+        FROM {SECURED_DATABASE}.users
         WHERE email = '{email}';
         """
     )
@@ -81,7 +81,7 @@ def main(request):
         f"""
             SELECT (MD5('{password}') = A.password) AS authenticated
             FROM {BACKEND_DATABASE}.users A
-                LEFT JOIN {MYSQL_DATABASE}.users B
+                LEFT JOIN {SECURED_DATABASE}.users B
                 ON A.user_id = B.user_id
             WHERE A.email = AES_ENCRYPT('{email}', B.secondary_password);
         """
@@ -97,7 +97,7 @@ def main(request):
 
         query = (
             f"""
-            INSERT INTO {MYSQL_DATABASE}.user_login_token (auth_token, user_id, expired_at)
+            INSERT INTO {SECURED_DATABASE}.user_login_token (auth_token, user_id, expired_at)
             VALUES (
                 '{auth_token}', {user_id}, CURRENT_TIMESTAMP() + INTERVAL 15 MINUTE
             );

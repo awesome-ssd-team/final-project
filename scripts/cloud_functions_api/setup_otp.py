@@ -10,15 +10,15 @@ def main(request):
 
     # Connect to MySQL
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
-    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
     conn = mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database=MYSQL_DATABASE,
+        database=SECURED_DATABASE,
     )
 
     cursor = conn.cursor(dictionary=True)
@@ -29,7 +29,7 @@ def main(request):
 
     query = (
         f"""
-        UPDATE {MYSQL_DATABASE}.users
+        UPDATE {SECURED_DATABASE}.users
         SET
             tfa_secret = '{otp_secret}',
             is_tfa_enabled = TRUE
