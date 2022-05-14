@@ -51,6 +51,7 @@ def main(request):
     user_id = user_id_result.get('user_id') if user_id_result else None
     user_name = user_id_result.get('user_name') if user_id_result else None
     is_tfa_enabled = bool(user_id_result.get('is_tfa_enabled')) if user_id_result else None
+    user_id_value = user_id if user_id is not None else 'NULL'
 
     # Check if credentials is blocked
     query = (
@@ -58,7 +59,7 @@ def main(request):
             SELECT TRUE AS is_blocked
             FROM {BACKEND_DATABASE}.blocked_session
                 WHERE (
-                    session_id = '{session_id}' OR user_id = {user_id}
+                    session_id = '{session_id}' OR user_id = {user_id_value}
                 )
                 AND ( CURRENT_TIMESTAMP() BETWEEN blocked_at AND blocked_until );
         """
@@ -125,7 +126,7 @@ def main(request):
         INSERT INTO {BACKEND_DATABASE}.user_login_logs
             (user_id, session_id)
         VALUES
-            ({user_id}, '{session_id}');
+            ({user_id_value}, '{session_id}');
         """
     )
     cursor.execute(query)
