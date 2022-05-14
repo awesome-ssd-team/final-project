@@ -49,6 +49,39 @@ def turncate_backend_users():
     conn.commit()
     conn.close()
 
+
+@pytest.fixture(scope='class')
+def turncate_backend_user_login_logs():
+    '''Clear all backend user login log records form the testing database'''
+    BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
+
+    print(f'Turncating all user records from the {BACKEND_DATABASE}.user_login_logs table.')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = f"TRUNCATE {BACKEND_DATABASE}.user_login_logs;"
+
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+
+@pytest.fixture(scope='class')
+def turncate_backend_blocked_sessions():
+    '''Clear all backend blocked session records form the testing database'''
+    BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
+
+    print(f'Turncating all user records from the {BACKEND_DATABASE}.blocked_session table.')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = f"TRUNCATE {BACKEND_DATABASE}.blocked_session;"
+
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+
 @pytest.fixture(scope='class')
 def turncate_users():
     '''Clear all user records from the testing database'''
