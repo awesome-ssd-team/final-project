@@ -1,20 +1,26 @@
+# pylint: disable=invalid-name
+# pylint: disable=too-many-locals
+'''The Cloud Functions module for handling user authentication'''
 import os
-import mysql.connector
 import uuid
+import mysql.connector
 
 def main(request):
+    '''The main function of handling the user authentication request'''
     request_json = request.get_json()
 
     # Connect to MySQL
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
+    MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
 
     conn = mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database='secured'
+        database=MYSQL_DATABASE,
     )
 
     cursor = conn.cursor(dictionary=True)
@@ -23,8 +29,10 @@ def main(request):
     email = request_json.get('email')
     password = request_json.get('password')
     session_id = request_json.get('session_id')
-    session_start_at_str = request_json.get('session_start_at_str')
-    session_expired_at_str = request_json.get('session_expired_at_str')
+
+    # Comment out below lines because they are unused variables
+    # session_start_at_str = request_json.get('session_start_at_str')
+    # session_expired_at_str = request_json.get('session_expired_at_str')
 
     # Get entered user_id & name (if any)
     query = (
@@ -33,7 +41,7 @@ def main(request):
             user_id,
             SUBSTRING_INDEX(full_name, ' ', 1) AS user_name,
             is_tfa_enabled
-        FROM secured.users
+        FROM {MYSQL_DATABASE}.users
         WHERE email = '{email}';
         """
     )
@@ -48,7 +56,7 @@ def main(request):
     query = (
         f"""
             SELECT TRUE AS is_blocked
-            FROM backend.blocked_session
+            FROM {BACKEND_DATABASE}.blocked_session
                 WHERE (
                     session_id = '{session_id}' OR user_id = {user_id}
                 )
@@ -64,15 +72,16 @@ def main(request):
     if is_blocked:
         return {
             'code': 401,
-            'message': "You or the credentials you are using is currently being blocked. Please try again later."
+            'message': ("You or the credentials you are using is currently being blocked. "
+                        "Please try again later.")
         }
 
     # Check if credentials are correct
     query = (
         f"""
             SELECT (MD5('{password}') = A.password) AS authenticated
-            FROM backend.users A
-                LEFT JOIN secured.users B
+            FROM {BACKEND_DATABASE}.users A
+                LEFT JOIN {MYSQL_DATABASE}.users B
                 ON A.user_id = B.user_id
             WHERE A.email = AES_ENCRYPT('{email}', B.secondary_password);
         """
@@ -88,7 +97,7 @@ def main(request):
 
         query = (
             f"""
-            INSERT INTO secured.user_login_token (auth_token, user_id, expired_at)
+            INSERT INTO {MYSQL_DATABASE}.user_login_token (auth_token, user_id, expired_at)
             VALUES (
                 '{auth_token}', {user_id}, CURRENT_TIMESTAMP() + INTERVAL 15 MINUTE
             );
@@ -97,6 +106,7 @@ def main(request):
 
         cursor.execute(query)
         conn.commit()
+        conn.close()
 
         return {
             'code': 200,
@@ -108,56 +118,60 @@ def main(request):
                 "is_tfa_enabled": is_tfa_enabled
             }
         }
-    else:
-        # Add attempt to user_login_logs
+
+    # Add attempt to user_login_logs
+    query = (
+        f"""
+        INSERT INTO {BACKEND_DATABASE}.user_login_logs
+            (user_id, session_id)
+        VALUES
+            ({user_id}, '{session_id}');
+        """
+    )
+    cursor.execute(query)
+    conn.commit()
+
+    # Check if attempt by device >= 3. Add to block if yes.
+    query = (
+        f"""
+        SELECT
+            (COUNT(*) >= 3) AS more_than_three
+        FROM
+            {BACKEND_DATABASE}.user_login_logs
+        WHERE
+            session_id = '{session_id}';
+        """
+    )
+
+    cursor.execute(query)
+    attempt_result = cursor.fetchone()
+    attempt_made = attempt_result.get('more_than_three')
+
+    if int(attempt_made) >= 3:
         query = (
             f"""
-            INSERT INTO backend.user_login_logs (user_id, session_id)
-            VALUES (
-                {user_id}, '{session_id}'
-            );
+            INSERT INTO {BACKEND_DATABASE}.blocked_session
+                (session_id, user_id, blocked_at, blocked_until)
+            SELECT
+                session_id,
+                user_id,
+                CURRENT_TIMESTAMP(),
+                CURRENT_TIMESTAMP() + INTERVAL 15 MINUTE
+            FROM
+                {BACKEND_DATABASE}.user_login_logs
+            WHERE
+                session_id = '{session_id}' AND user_id IS NOT NULL
+            GROUP BY
+                1,2;
             """
         )
+
         cursor.execute(query)
         conn.commit()
 
-        # Check if attempt by device >= 3. Add to block if yes.
-        query = (
-            f"""
-            SELECT
-                (COUNT(*) >= 3) AS more_than_three
-            FROM
-                backend.user_login_logs
-            WHERE
-                session_id = '{session_id}';
-            """
-        )
+    conn.close()
 
-        cursor.execute(query)
-        attempt_result = cursor.fetchone()
-        attempt_made = attempt_result.get('more_than_three')
-
-        if int(attempt_made) >= 3:
-            query = (
-                f"""
-                INSERT INTO backend.blocked_session (session_id, user_id, blocked_at, blocked_until)
-                SELECT
-                    session_id, user_id, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP() + INTERVAL 15 MINUTE
-                FROM
-                    backend.user_login_logs
-                WHERE
-                    session_id = '{session_id}' AND user_id IS NOT NULL
-                GROUP BY
-                    1,2;
-                """
-            )
-
-            cursor.execute(query)
-            conn.commit()
-
-        conn.close()
-
-        return {
-            'code': 406,
-            'message': 'The credentials entered is not recognized or you are being blocked'
-        }
+    return {
+        'code': 406,
+        'message': 'The credentials entered is not recognized or you are being blocked'
+    }

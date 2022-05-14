@@ -2,6 +2,8 @@ CREATE SCHEMA public_test;
 
 CREATE SCHEMA secured_test;
 
+CREATE SCHEMA backend_test;
+
 CREATE TABLE public_test.users (
 	created_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
 	updated_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
@@ -58,7 +60,7 @@ CREATE TRIGGER secured_test.user_table_insert AFTER INSERT ON users FOR EACH ROW
         );
     END;
 
-CREATE TRIGGER secured_test.user_table_update AFTER UPDATE ON users FOR EACH ROW BEGIN
+CREATE TRIGGER secured_test.user_table_update AFTER UPDATE ON secured_test.users FOR EACH ROW BEGIN
         SET @encryption_key = NEW.secondary_password;
         UPDATE public_test.users
         SET

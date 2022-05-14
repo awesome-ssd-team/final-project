@@ -2,6 +2,8 @@ CREATE SCHEMA public;
 
 CREATE SCHEMA secured;
 
+CREATE SCHEMA backend;
+
 CREATE TABLE public.users (
 	created_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
 	updated_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,

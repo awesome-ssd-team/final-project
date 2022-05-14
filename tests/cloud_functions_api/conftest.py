@@ -34,9 +34,27 @@ def fake_user_data() -> dict[str, str]:
     return _generate_fake_user_data()
 
 @pytest.fixture(scope='class')
+def turncate_backend_users():
+    '''Clear all backend user records from the testing database'''
+    BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
+
+    print(f'Turncating all user records from the {BACKEND_DATABASE}.users table.')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = f"TRUNCATE {BACKEND_DATABASE}.users;"
+
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+
+@pytest.fixture(scope='class')
 def turncate_users():
     '''Clear all user records from the testing database'''
     MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+
+    print(f'Turncating all user records from the {MYSQL_DATABASE}.users table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -51,6 +69,8 @@ def turncate_users():
 def create_a_testing_user_account():
     '''Create a testing user account'''
     MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+
+    print(f'Creating a fake user record to the {MYSQL_DATABASE}.users table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
