@@ -74,7 +74,7 @@ class MainApp:
         '''Display the data view'''
         status_code = None
 
-        print('***Data View***')
+        print('***Data View***'.center(147))
         while status_code != 200:
 
             http_payload = {
@@ -95,7 +95,17 @@ class MainApp:
 
             #print(status_code)
             #print(message)
-            print(data)
+            print("="*153)
+            print("|","Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(30),"|")
+            print("|","-"*149,"|")
+            for item in data:
+                data_id=str(item['data_id']).ljust(38)
+                data_value=str(item['data_value']).ljust(20)
+                data_details=str(item['data_details']).ljust(50)
+                is_valid=str(bool(item['is_valid'])).ljust(7)
+                last_modified=str(item['last_modified']).ljust(30)
+                print("|",data_id,data_value,data_details,is_valid,last_modified,"|")
+            print("="*153)
 
         '''Display the action page'''
         print('What action you would like to take?')
