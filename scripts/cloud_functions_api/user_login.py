@@ -4,7 +4,6 @@
 import os
 import uuid
 import mysql.connector
-import logging
 
 def main(request):
     '''The main function of handling the user authentication request'''
@@ -54,6 +53,18 @@ def main(request):
     is_tfa_enabled = bool(user_id_result.get('is_tfa_enabled')) if user_id_result else None
     user_id_value = user_id if user_id is not None else 'NULL'
 
+    # Add attempt to user_login_logs
+    query = (
+        f"""
+            INSERT INTO {BACKEND_DATABASE}.user_login_logs
+                (user_id, session_id)
+            VALUES
+                ({user_id_value}, '{session_id}');
+            """
+    )
+    cursor.execute(query)
+    conn.commit()
+
     # Check if credentials is blocked
     query = (
         f"""
@@ -72,7 +83,6 @@ def main(request):
 
     # Check if user_id is blocked due to malicious login attempt
     if is_blocked:
-        logging.info('User is blocked')
         return {
             'code': 401,
             'message': ("You or the credentials you are using is currently being blocked. "
@@ -95,7 +105,6 @@ def main(request):
     authenticated = bool(query_result.get('authenticated')) if query_result else False
 
     if authenticated:
-        logging.info('User is authenticated')
         # Generate token & insert into table as an acknowledge token
         auth_token = str(uuid.uuid4())
 
@@ -123,23 +132,11 @@ def main(request):
             }
         }
 
-    # Add attempt to user_login_logs
-    query = (
-        f"""
-        INSERT INTO {BACKEND_DATABASE}.user_login_logs
-            (user_id, session_id)
-        VALUES
-            ({user_id_value}, '{session_id}');
-        """
-    )
-    cursor.execute(query)
-    conn.commit()
-
     # Check if attempt by device >= 3. Add to block if yes.
     query = (
         f"""
         SELECT
-            (COUNT(*) >= 3) AS more_than_three
+            (COUNT(*) > 3) AS more_than_three
         FROM
             {BACKEND_DATABASE}.user_login_logs
         WHERE
@@ -150,7 +147,8 @@ def main(request):
     cursor.execute(query)
     attempt_result = cursor.fetchone()
     attempt_made = attempt_result.get('more_than_three') if attempt_result else 0
-    is_blocked = False
+
+    print(f'attempt_made: {attempt_made}')
 
     if int(attempt_made) == 1:
         query = (
