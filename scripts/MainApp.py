@@ -9,6 +9,8 @@ import json
 import requests
 import pyotp
 import qrcode
+import pandas as pd
+from styleframe import StyleFrame, Styler
 
 class MainApp:
     '''The main application'''
@@ -50,6 +52,8 @@ class MainApp:
             self.update_page()
         elif activity == 'delete':
             self.xxx()
+        elif activity == 'download':
+            self.download_page()
 
     def homepage(self):
         '''Display the home page'''
@@ -111,20 +115,22 @@ class MainApp:
         '''Display the action page'''
         print('What action you would like to take?')
         print('1. Add Data')
-        print('2. update Data')
-        print('3. Delete Data (Opening soon)\n')
+        print('2. Update Data')
+        print('3. Delete Data (Opening soon)')
+        print('4. Download Data\n')
         user_action_input = '0'
 
         # Repeat until valid input
-        while int(user_action_input) not in [1, 2, 3]:
+        while int(user_action_input) not in [1, 2, 3, 4]:
             user_action_input = input('Please select a menu: ')
-            if int(user_action_input) not in [1, 2, 3]:
+            if int(user_action_input) not in [1, 2, 3, 4]:
                 print('Input is invalid...\n')
 
         menu_dict = {
             '1': 'add',
             '2': 'update',
-            '3': 'delete'
+            '3': 'delete',
+            '4': 'download'
         }
 
         return self.switch_menu(menu_dict[user_action_input])
@@ -423,6 +429,43 @@ class MainApp:
             print(message)
 
         next = input("Press any key to proceed: ")
+        return self.switch_menu(activity='action')
+
+    def download_page(self):
+        '''Display the download page'''
+        status_code = 0
+
+        while status_code != 200:
+            http_payload = {
+                "user_id": self.user['id']
+            }
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            data = response.get('data')
+
+            #Convert data to excel format
+            df = pd.DataFrame(data)
+            cols = df.columns.tolist()
+            cols = cols[1:2] + cols[:1] + cols[2:]
+            df = df[cols]
+            df.rename(columns= {"data_id":"Data ID","data_details":"Data Details","data_value":"Data Value","is_valid":"Valid?","last_modified":"Last modified"}, inplace=True)
+            df.style.set_properties(align="left")
+            timestamp = datetime.now()
+            excel_writer = StyleFrame.ExcelWriter(f'{self.user["name"]}_{timestamp}.xlsx')
+            sf = StyleFrame(df)
+            sf.set_column_width(columns=['Data ID','Data Details','Last modified'],width=40)
+            sf.set_column_width(columns=['Data Value'],width=20)
+            sf.apply_column_style(cols_to_style=['Data ID','Data Details','Data Value','Last modified'],styler_obj=Styler(horizontal_alignment='left'),style_header=True)
+            sf.to_excel(excel_writer=excel_writer)
+            excel_writer.save()
+
+        input('Data downloaded. Press any key to continue...')
         return self.switch_menu(activity='action')
 
 
