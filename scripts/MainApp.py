@@ -85,7 +85,7 @@ class MainApp:
 
             http_response = requests.post(
                 #'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
-                'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
+                'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_data',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )           
