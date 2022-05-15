@@ -71,8 +71,14 @@ class MainApp:
         # Repeat until valid input
         while int(user_input) not in [1, 2]:
             user_input = input('Please select a menu: ')
-            if int(user_input) not in [1, 2]:
-                print('Input is invalid...\n')
+
+            if not user_input.isdigit():
+                print("Please give only the correct option.")
+                user_input = '0'
+                continue
+            else:
+                if int(user_input) not in [1, 2]:
+                    print('Input is invalid...\n')
 
         menu_dict = {
             '1': 'login',
@@ -219,8 +225,8 @@ class MainApp:
             }
 
             # 'https://us-central1-ssd-136542.cloudfunctions.net/user_login'
-            http_response = requests.get(
-                'https://us-central1-ssd-136542.cloudfunctions.net/user_login_wrong_password',
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/user_login',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
@@ -231,7 +237,7 @@ class MainApp:
             data = response.get('data')
             print(message)
 
-            if data:
+            if status_code == 200:
                 tmp_auth_token = data.get("auth_token")
                 self.user['id'] = data.get('user_id')
                 self.user['name'] = data.get('user_name')
@@ -242,7 +248,7 @@ class MainApp:
                 self.is_blocked = True
                 self.switch_menu('homepage')
 
-            if is_tfa_enabled:
+            if status_code == 200 and is_tfa_enabled:
                 # Comment out because it is an unused variable
                 # query = (
                 #     f"""
@@ -266,14 +272,12 @@ class MainApp:
                 # message = response.get('message') # Comment out because it is an unused variable
                 data = response.get('data')
                 tfa_secret = data.get('tfa_secret')
-                print(tfa_secret)
 
                 totp = pyotp.TOTP(tfa_secret)
                 passed = False
                 attempt = 0
 
                 while not passed and attempt < 3:
-                    print(str(totp.now()))
                     totp_input = str(input('Enter your MFA code: '))
 
                     if str(totp_input) == str(totp.now()):
@@ -286,17 +290,25 @@ class MainApp:
                 if passed:
                     self.user['auth_token'] = tmp_auth_token
                     print(f"Hi {self.user['name']}! You are logged in, yay!")
-                    input('Success! Press enter to proceed.')
                     return self.switch_menu(activity='action')
-            else:
-                input('Success! Press enter to proceed.')
-                return self.switch_menu(activity='action')
-            attempt = attempt + 1
+            elif status_code == 200 and not is_tfa_enabled:
+                print('TFA is not enabled! Please enable TFA...')
+                input('Press enter to proceed...')
+                return self.switch_menu(activity='setup_tfa', user_email=email, tmp_auth_token=tmp_auth_token)
+
+        attempt = attempt + 1
+        print("Failed login attempt. Returning to homepage.")
+        input('Press enter to proceed.')
+        return self.switch_menu(activity='homepage')
 
     def setup_tfa(self, **kwargs):
         '''Set up the two factor authentication for users'''
         user_email = kwargs.get('user_email')
-        base32secret = pyotp.random_base32()
+        tmp_auth_token = kwargs.get('tmp_auth_token')
+        base32secret = kwargs.get('base32secret')
+
+        is_retry = True if base32secret else False
+        base32secret = base32secret if base32secret else pyotp.random_base32()
 
         totp_uri = pyotp.totp.TOTP(base32secret).provisioning_uri(
             user_email,
@@ -330,31 +342,37 @@ class MainApp:
 
             attempt = attempt + 1
 
-            if attempt == 3:
+            if attempt == 3 and not is_retry:
                 input("Let's try again from the beginning..")
-                self.switch_menu(activity='setup_tfa', user_email=user_email)
+                self.switch_menu(activity='setup_tfa', user_email=user_email, base32secret=base32secret)
+            elif attempt == 3 and is_retry:
+                input("Setup TFA failed. Try logging in to retry the setup..")
+                self.switch_menu(activity='homepage')
 
         # Save the secret to DB for further authentication
-        if passed:
+        http_payload = {
+            'otp_secret': base32secret,
+            'email': user_email
+        }
 
-            http_payload = {
-                'otp_secret': base32secret,
-                'email': user_email
-            }
+        http_response = requests.post(
+            'https://us-central1-ssd-136542.cloudfunctions.net/setup_otp',
+            headers={"Content-Type": "application/json"},
+            data=json.dumps(http_payload)  # possible request parameters
+        )
 
-            http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/setup_otp',
-                headers={"Content-Type": "application/json"},
-                data=json.dumps(http_payload)  # possible request parameters
-            )
+        response = json.loads(http_response.content)
+        message = response.get('message')
 
-            response = json.loads(http_response.content)
-            message = response.get('message')
+        print(message)
 
-            print(message)
+        if not tmp_auth_token:
             input('Success! Press enter to go to homepage.')
-
-        return self.switch_menu(activity='homepage')
+            return self.switch_menu(activity='homepage')
+        else:
+            input("Yay, TFA setup, let's continue!")
+            self.user['auth_token'] = tmp_auth_token
+            return self.switch_menu(activity='action')
 
     def add_page(self):
         '''Display the add data page'''
