@@ -5,7 +5,11 @@ __pycache__/
 .coverage
 
 # Environments
+.tox
 .env
+.env.dev
+.env.uat
+.env.test
 .venv
 env/
 venv/

@@ -39,7 +39,7 @@ repos:
 #         pass_filenames: false
 #         always_run: true
 #         args:
-#         - --cov=./ tests/
+#           - --cov-config=.coveragerc --cov=scripts --cov-report=term
 
 # repos:
 # -   repo: https://github.com/PyCQA/bandit

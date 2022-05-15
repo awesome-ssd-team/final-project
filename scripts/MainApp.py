@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 '''The main application module'''
 from getpass import getpass
 from datetime import datetime, timedelta
@@ -8,6 +9,8 @@ import json
 import requests
 import pyotp
 import qrcode
+import pandas as pd
+from styleframe import StyleFrame, Styler
 
 class MainApp:
     '''The main application'''
@@ -44,7 +47,7 @@ class MainApp:
         elif activity == 'action':
             self.action_page()
         elif activity == 'add':
-            self.setup_tfa()
+            self.add_page()
         elif activity == 'update':
             self.update_page(**kwargs)
         elif activity == 'delete':
@@ -88,52 +91,49 @@ class MainApp:
                 'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_data',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
-            )           
+            )
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
             message = response.get('message')
             data = response.get('data')
             kwargs = data
-            #print(status_code)
-            #print(message)
             print()
-            print()
-            if data:
-                for i in data:
-                    print("ID:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
-            else:
-                print("No data entries for this user.")
-            #print(data)
-            print()
-            print()
+            print("="*153)
+            print("|","Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(30),"|")
+            print("|","-"*149,"|")
+            for item in data:
+                data_id=str(item['data_id']).ljust(38)
+                data_value=str(item['data_value']).ljust(20)
+                data_details=str(item['data_details']).ljust(50)
+                is_valid=str(bool(item['is_valid'])).ljust(7)
+                last_modified=str(item['last_modified']).ljust(30)
+                print("|",data_id,data_value,data_details,is_valid,last_modified,"|")
+            print("="*153)
 
         '''Display the action page'''
         print('='*40)
         print('What action you would like to take?')
         print('='*40)
         print()
-        print('1. Add Data (Opening soon)')
+        print('1. Add Data')
         print('2. Update Data')
-        print('3. Delete Data\n')
+        print('3. Delete Data ')
+        print('4. Download Data\n')
         user_action_input = '0'
 
         # Repeat until valid input
-        while int(user_action_input) not in [1, 2, 3]:
+        while int(user_action_input) not in [1, 2, 3, 4]:
             user_action_input = input('Please select a menu: ')
-            if int(user_action_input) not in [1, 2, 3]:
+            if int(user_action_input) not in [1, 2, 3, 4]:
                 print('Input is invalid...\n')
 
         menu_dict = {
             '1': 'add',
             '2': 'update',
-            '3': 'delete'
+            '3': 'delete',
+            '4': 'download'
         }
-        #if user_action_input == '3':
-        #    self.delete_data(data)
-        #elif user_action_input == '2':
-        #    self.update_page(data)
-        print("DATA: ",data)
         
         kwargs = {}
         for i in data:
@@ -225,8 +225,9 @@ class MainApp:
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
-            # message = response.get('message') # Comment out because it is an unused variable
+            message = response.get('message')
             data = response.get('data')
+            print(message)
 
             if data:
                 tmp_auth_token = data.get("auth_token")
@@ -282,7 +283,11 @@ class MainApp:
                 if passed:
                     self.user['auth_token'] = tmp_auth_token
                     print(f"Hi {self.user['name']}! You are logged in, yay!")
+                    input('Success! Press enter to proceed.')
                     return self.switch_menu(activity='action')
+            else:
+                input('Success! Press enter to proceed.')
+                return self.switch_menu(activity='action')
             attempt = attempt + 1
 
     def setup_tfa(self, **kwargs):
@@ -348,6 +353,39 @@ class MainApp:
 
         return self.switch_menu(activity='homepage')
 
+    def add_page(self):
+        '''Display the add data page'''
+        status_code = 0
+        data_value = 0
+        data_details = ''
+
+
+        while status_code != 200:
+            while not data_value:
+                data_value = input("Enter data value:")
+            while not data_details:
+                data_details = input("Enter data details:")
+
+            http_payload = {
+                "user_id": self.user['id'],
+                'data_value': int(data_value),
+                'data_details': data_details
+            }
+
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/add_data',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            message = response.get('message')
+            print(message)
+
+        input("Press any key to proceed: ")
+        return self.switch_menu(activity='action')
+
     def update_page(self, **kwargs):
         '''Display the update page'''
         response = []
@@ -360,17 +398,31 @@ class MainApp:
             print("No active data entries for this user.")
             input("Press any key to return...")
             self.switch_menu(activity='action')
-
-        print('='*40)
-        for i in response:
-            if i.get('is_valid') == 1:
-                print("ID:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
-                #id_list.append(i.get('data_id'))
-            else:
-                print("No active data entries for this user.")
-                input("Press any key to return...")
-                self.switch_menu(activity='action')
-        print('='*40)
+        id_list = []
+        count = 0
+        #print('='*40)
+        print("="*156)
+        print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
+        print("|","-"*152,"|")
+        if response:
+            for i in response:
+                if i.get('is_valid') == 1:
+                    count = count + 1
+                    id = str(count).ljust(10)
+                    data_id=str(i.get('data_id')).ljust(38)
+                    data_value=str(i.get('data_value')).ljust(20)
+                    data_details=str(i.get('data_details')).ljust(50)
+                    #is_valid=str(i.get('is_valid')).ljust(7)
+                    last_modified=str(i.get('last_modified')).ljust(30)
+                    print("|",id,data_id,data_value,data_details,last_modified,"|")
+                    #print("ID:",count,     "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+                    id_list.append(i.get('data_id'))
+            print("="*156)
+        else:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+        #print('='*40)
 
         status_code = 0
         update_action = 0
@@ -383,22 +435,33 @@ class MainApp:
             print("Which data do you want to update?")
             data_id = input("Enter data ID: ") 
 
+            #ADJUST
+            while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
+                print("Invalid ID entered")
+                data_id = input("Please Enter the Data ID as displayed in the Data View:")
+            print()
+            #http_payload = {
+            #    "user_id": self.user['id'],
+            #    'data_id': id_list[int(data_id) - 1],#data_id,
+            #    'update_action': '3',
+            #}
+            ###
             while int(update_action) not in [1, 2]:
                 print("I want to update... (1)data value (2)data details:")
                 update_action = input("Please Enter 1 or 2: ")
                 if int(update_action) not in [1, 2]:
                     print('Input is invalid...\n')
-            
+
             if update_action == '1':
                 data_value = input("Enter new data value. (Number only): ")
 
-                
+
             elif update_action == '2':
                 data_details = input("Enter new data details: ")
 
             http_payload = {
                 "user_id": self.user['id'],
-                'data_id': data_id,
+                'data_id': id_list[int(data_id) - 1],
                 'update_action': update_action,
                 'data_value': data_value,
                 'data_details': data_details
@@ -436,34 +499,56 @@ class MainApp:
             input("Press any key to return...")
             self.switch_menu(activity='action')
 
-        print('='*40)
-        for i in response:
-            if i.get('is_valid') == 1:
-                print("ID:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
-                id_list.append(i.get('data_id'))
-            else:
-                print("No active data entries for this user.")
-                input("Press any key to return...")
-                self.switch_menu(activity='action')
-        print('='*40)
+        count = 0
+        print("="*156)
+        print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
+        print("|","-"*152,"|")
+        if response:
+            for i in response:
+                if i.get('is_valid') == 1:
+                    count = count + 1
+                    id = str(count).ljust(10)
+                    data_id=str(i.get('data_id')).ljust(38)
+                    data_value=str(i.get('data_value')).ljust(20)
+                    data_details=str(i.get('data_details')).ljust(50)
+                    #is_valid=str(i.get('is_valid')).ljust(7)
+                    last_modified=str(i.get('last_modified')).ljust(30)
+                    print("|",id,data_id,data_value,data_details,last_modified,"|")
+                    #print("ID:",count,     "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+                    id_list.append(i.get('data_id'))
+            print("="*156)
+        else:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
 
-        print()
 
+        #print('='*40)
+        #count = 0
+        #for i in response:
+        #    if i.get('is_valid') == 1:
+        #        count = count + 1
+        #        print("ID:", count, "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+        #        id_list.append(i.get('data_id'))
+        #    else:
+        #        print("No active data entries for this user.")
+        #        input("Press any key to return...")
+        #        self.switch_menu(activity='action')
+        #print('='*40)
         status_code = 0
-
         while status_code != 200:
             print("Which data entry do you want to delete?")
             #DO QUERY HERE TO DISPLAY DATA ENTRIES... OR DO THE QUERY ON TOP...
-            data_id = input("Enter data ID: ") 
+            data_id = input("Enter the ID: ") 
 
-            while int(data_id) not in id_list:
+            while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
                 print("Invalid ID entered")
                 data_id = input("Please Enter the Data ID as displayed in the Data View:")
             print()
-
+            #send_data = id_list[]
             http_payload = {
                 "user_id": self.user['id'],
-                'data_id': data_id,
+                'data_id': id_list[int(data_id) - 1],#data_id,
                 'update_action': '3',
             }
 
@@ -482,10 +567,44 @@ class MainApp:
         next = input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
 
-
-
-
         self.action_page()
 
+
+    def download_page(self):
+        '''Display the download page'''
+        status_code = 0
+
+        while status_code != 200:
+            http_payload = {
+                "user_id": self.user['id']
+            }
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            data = response.get('data')
+
+            #Convert data to excel format
+            df = pd.DataFrame(data)
+            cols = df.columns.tolist()
+            cols = cols[1:2] + cols[:1] + cols[2:]
+            df = df[cols]
+            df.rename(columns= {"data_id":"Data ID","data_details":"Data Details","data_value":"Data Value","is_valid":"Valid?","last_modified":"Last modified"}, inplace=True)
+            df.style.set_properties(align="left")
+            timestamp = datetime.now()
+            excel_writer = StyleFrame.ExcelWriter(f'{self.user["name"]}_{timestamp}.xlsx')
+            sf = StyleFrame(df)
+            sf.set_column_width(columns=['Data ID','Data Details','Last modified'],width=40)
+            sf.set_column_width(columns=['Data Value'],width=20)
+            sf.apply_column_style(cols_to_style=['Data ID','Data Details','Data Value','Last modified'],styler_obj=Styler(horizontal_alignment='left'),style_header=True)
+            sf.to_excel(excel_writer=excel_writer)
+            excel_writer.save()
+
+        input('Data downloaded. Press any key to continue...')
+        return self.switch_menu(activity='action')
 
 
