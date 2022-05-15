@@ -1,3 +1,2 @@
 [run]
-include = */scripts/*
-omit = *portainer-data* */__init__.py, *tests*
+omit = */__init__.py, *tests*

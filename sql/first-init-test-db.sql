@@ -1,10 +1,10 @@
-CREATE SCHEMA public;
+CREATE SCHEMA public_test;
 
-CREATE SCHEMA secured;
+CREATE SCHEMA secured_test;
 
-CREATE SCHEMA backend;
+CREATE SCHEMA backend_test;
 
-CREATE TABLE public.users (
+CREATE TABLE public_test.users (
 	created_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
 	updated_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
 	user_id              INT UNSIGNED NOT NULL    PRIMARY KEY,
@@ -14,7 +14,7 @@ CREATE TABLE public.users (
 	secondary_password   BLOB  NOT NULL
  );
 
-CREATE TABLE public.user_login_logs (
+CREATE TABLE public_test.user_login_logs (
 	attempt_id           INT UNSIGNED NOT NULL  AUTO_INCREMENT  PRIMARY KEY,
 	user_id              INT UNSIGNED NOT NULL    ,
 	session_id           VARCHAR(150)  NOT NULL    ,
@@ -24,7 +24,7 @@ CREATE TABLE public.user_login_logs (
 	CONSTRAINT idx_user_login_logs_0 UNIQUE ( session_id )
  ) engine=InnoDB;
 
-CREATE TABLE public.blocked_session (
+CREATE TABLE public_test.blocked_session (
 	block_id             INT UNSIGNED NOT NULL  AUTO_INCREMENT  PRIMARY KEY,
 	session_id           VARCHAR(150)  NOT NULL    ,
 	blocked_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
@@ -32,7 +32,7 @@ CREATE TABLE public.blocked_session (
 	created_at           TIMESTAMP  NOT NULL DEFAULT (now())
  ) engine=InnoDB;
 
-CREATE TABLE secured.users (
+CREATE TABLE secured_test.users (
 	user_id              INT UNSIGNED NOT NULL  AUTO_INCREMENT  PRIMARY KEY,
 	created_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
 	updated_at           TIMESTAMP  NOT NULL DEFAULT (now())   ,
@@ -42,15 +42,15 @@ CREATE TABLE secured.users (
 	secondary_password   VARCHAR(6)  NOT NULL
  ) engine=InnoDB;
 
-CREATE INDEX fk_user_login_logs ON public.user_login_logs ( user_id );
+CREATE INDEX fk_user_login_logs ON public_test.user_login_logs ( user_id );
 
-ALTER TABLE public.blocked_session ADD CONSTRAINT fk_blocked_session FOREIGN KEY ( session_id ) REFERENCES public.user_login_logs( session_id ) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE public_test.blocked_session ADD CONSTRAINT fk_blocked_session FOREIGN KEY ( session_id ) REFERENCES public_test.user_login_logs( session_id ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-ALTER TABLE public.user_login_logs ADD CONSTRAINT fk_user_login_logs FOREIGN KEY ( user_id ) REFERENCES public.users( user_id ) ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE public_test.user_login_logs ADD CONSTRAINT fk_user_login_logs FOREIGN KEY ( user_id ) REFERENCES public_test.users( user_id ) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
-CREATE TRIGGER secured.user_table_insert AFTER INSERT ON users FOR EACH ROW BEGIN
+CREATE TRIGGER secured_test.user_table_insert AFTER INSERT ON users FOR EACH ROW BEGIN
         SET @encryption_key = NEW.secondary_password;
-        INSERT INTO public.users (user_id, password, secondary_password, email, full_name)
+        INSERT INTO public_test.users (user_id, password, secondary_password, email, full_name)
         VALUES(
                NEW.user_id,
                MD5(NEW.password),
@@ -60,9 +60,9 @@ CREATE TRIGGER secured.user_table_insert AFTER INSERT ON users FOR EACH ROW BEGI
         );
     END;
 
-CREATE TRIGGER secured.user_table_update AFTER UPDATE ON users FOR EACH ROW BEGIN
+CREATE TRIGGER secured_test.user_table_update AFTER UPDATE ON secured_test.users FOR EACH ROW BEGIN
         SET @encryption_key = NEW.secondary_password;
-        UPDATE public.users
+        UPDATE public_test.users
         SET
             full_name = AES_ENCRYPT(NEW.full_name, @encryption_key),
             email = AES_ENCRYPT(NEW.email, @encryption_key),
