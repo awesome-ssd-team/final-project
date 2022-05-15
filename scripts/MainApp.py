@@ -10,9 +10,7 @@ import requests
 import pyotp
 import qrcode
 import pandas as pd
-
 from styleframe import StyleFrame, Styler
-from json.decoder import JSONDecodeError
 
 class MainApp:
     '''The main application'''
@@ -39,9 +37,6 @@ class MainApp:
 
         os.system('cls' if os.name == 'nt' else 'clear')
 
-        if self.is_blocked:
-            print("You are blocked from doing anything. Please contact administrations.")
-
         if activity == 'homepage':
             self.homepage()
         elif activity == 'register':
@@ -55,9 +50,9 @@ class MainApp:
         elif activity == 'add':
             self.add_page()
         elif activity == 'update':
-            self.update_page()
+            self.update_page(**kwargs)
         elif activity == 'delete':
-            self.xxx()
+            self.delete_data(**kwargs)
         elif activity == 'download':
             self.download_page()
 
@@ -91,7 +86,9 @@ class MainApp:
         '''Display the data view'''
         status_code = None
 
-        print('***Data View***'.center(147))
+        print('='*40)
+        print('***Data View***')
+        print('='*40)
         while status_code != 200:
 
             http_payload = {
@@ -100,7 +97,7 @@ class MainApp:
 
             http_response = requests.post(
                 #'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
-                'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
+                'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_data',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
@@ -109,9 +106,8 @@ class MainApp:
             status_code = response.get('code')
             message = response.get('message')
             data = response.get('data')
-
-            #print(status_code)
-            #print(message)
+            kwargs = data
+            print()
             print("="*153)
             print("|","Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(30),"|")
             print("|","-"*149,"|")
@@ -125,10 +121,13 @@ class MainApp:
             print("="*153)
 
         '''Display the action page'''
+        print('='*40)
         print('What action you would like to take?')
+        print('='*40)
+        print()
         print('1. Add Data')
         print('2. Update Data')
-        print('3. Delete Data (Opening soon)')
+        print('3. Delete Data ')
         print('4. Download Data\n')
         user_action_input = '0'
 
@@ -145,7 +144,10 @@ class MainApp:
             '4': 'download'
         }
 
-        return self.switch_menu(menu_dict[user_action_input])
+        kwargs = {}
+        for i in data:
+            kwargs[str(i.get('data_id'))]=i
+        return self.switch_menu(menu_dict[user_action_input], **kwargs)
 
     def registration_page(self):
         '''Display the registration page'''
@@ -224,7 +226,6 @@ class MainApp:
                 'session_id': self.session['id']
             }
 
-            # 'https://us-central1-ssd-136542.cloudfunctions.net/user_login'
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/user_login',
                 headers={"Content-Type": "application/json"},
@@ -407,8 +408,44 @@ class MainApp:
         input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
 
-    def update_page(self):
+    def update_page(self, **kwargs):
         '''Display the update page'''
+        response = []
+        for key, value in kwargs.items():
+            response.append(value)
+
+        print("LIST OF CURRENT DATA ENTRIES:")
+        print()
+        if not response:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+        id_list = []
+        count = 0
+        #print('='*40)
+        print("="*156)
+        print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
+        print("|","-"*152,"|")
+        if response:
+            for i in response:
+                if i.get('is_valid') == 1:
+                    count = count + 1
+                    id = str(count).ljust(10)
+                    data_id=str(i.get('data_id')).ljust(38)
+                    data_value=str(i.get('data_value')).ljust(20)
+                    data_details=str(i.get('data_details')).ljust(50)
+                    #is_valid=str(i.get('is_valid')).ljust(7)
+                    last_modified=str(i.get('last_modified')).ljust(30)
+                    print("|",id,data_id,data_value,data_details,last_modified,"|")
+                    #print("ID:",count,     "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+                    id_list.append(i.get('data_id'))
+            print("="*156)
+        else:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+        #print('='*40)
+
         status_code = 0
         update_action = 0
         data_value = 0
@@ -418,8 +455,19 @@ class MainApp:
 
         while status_code != 200:
             print("Which data do you want to update?")
-            data_id = input("Enter data id: ")
+            data_id = input("Enter data ID: ")
 
+            #ADJUST
+            while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
+                print("Invalid ID entered")
+                data_id = input("Please Enter the Data ID as displayed in the Data View:")
+            print()
+            #http_payload = {
+            #    "user_id": self.user['id'],
+            #    'data_id': id_list[int(data_id) - 1],#data_id,
+            #    'update_action': '3',
+            #}
+            ###
             while int(update_action) not in [1, 2]:
                 print("I want to update... (1)data value (2)data details:")
                 update_action = input("Please Enter 1 or 2: ")
@@ -435,7 +483,7 @@ class MainApp:
 
             http_payload = {
                 "user_id": self.user['id'],
-                'data_id': data_id,
+                'data_id': id_list[int(data_id) - 1],
                 'update_action': update_action,
                 'data_value': data_value,
                 'data_details': data_details
@@ -456,6 +504,93 @@ class MainApp:
 
         next = input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
+
+    def delete_data(self, **kwargs):
+        '''Display the delete_data page'''
+        os.system('cls' if os.name == 'nt' else 'clear')
+        #UNPACK KWARGS:
+        response = []
+        for key, value in kwargs.items():
+            response.append(value)
+
+        id_list = []
+        print("LIST OF CURRENT DATA ENTRIES:")
+        print()
+        if not response:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+
+        count = 0
+        print("="*156)
+        print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
+        print("|","-"*152,"|")
+        if response:
+            for i in response:
+                if i.get('is_valid') == 1:
+                    count = count + 1
+                    id = str(count).ljust(10)
+                    data_id=str(i.get('data_id')).ljust(38)
+                    data_value=str(i.get('data_value')).ljust(20)
+                    data_details=str(i.get('data_details')).ljust(50)
+                    #is_valid=str(i.get('is_valid')).ljust(7)
+                    last_modified=str(i.get('last_modified')).ljust(30)
+                    print("|",id,data_id,data_value,data_details,last_modified,"|")
+                    #print("ID:",count,     "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+                    id_list.append(i.get('data_id'))
+            print("="*156)
+        else:
+            print("No active data entries for this user.")
+            input("Press any key to return...")
+            self.switch_menu(activity='action')
+
+
+        #print('='*40)
+        #count = 0
+        #for i in response:
+        #    if i.get('is_valid') == 1:
+        #        count = count + 1
+        #        print("ID:", count, "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
+        #        id_list.append(i.get('data_id'))
+        #    else:
+        #        print("No active data entries for this user.")
+        #        input("Press any key to return...")
+        #        self.switch_menu(activity='action')
+        #print('='*40)
+        status_code = 0
+        while status_code != 200:
+            print("Which data entry do you want to delete?")
+            #DO QUERY HERE TO DISPLAY DATA ENTRIES... OR DO THE QUERY ON TOP...
+            data_id = input("Enter the ID: ")
+
+            while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
+                print("Invalid ID entered")
+                data_id = input("Please Enter the Data ID as displayed in the Data View:")
+            print()
+            #send_data = id_list[]
+            http_payload = {
+                "user_id": self.user['id'],
+                'data_id': id_list[int(data_id) - 1],#data_id,
+                'update_action': '3',
+            }
+
+            http_response = requests.post(
+                'https://us-central1-ssd-136542.cloudfunctions.net/update_data',
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(http_payload)  # possible request parameters
+            )
+
+            response = json.loads(http_response.content)
+            status_code = response.get('code')
+            message = response.get('message')
+
+            print(message)
+
+        next = input("Press any key to proceed: ")
+        return self.switch_menu(activity='action')
+
+        self.action_page()
+
 
     def download_page(self):
         '''Display the download page'''
