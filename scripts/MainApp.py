@@ -10,7 +10,9 @@ import requests
 import pyotp
 import qrcode
 import pandas as pd
+
 from styleframe import StyleFrame, Styler
+from json.decoder import JSONDecodeError
 
 class MainApp:
     '''The main application'''
@@ -29,12 +31,16 @@ class MainApp:
             'name': None,
             'auth_token': None,
         }
+        self.is_blocked = False
         self.homepage()
 
     def switch_menu(self, activity, **kwargs):
         '''Switch menu based on the current activity'''
 
         os.system('cls' if os.name == 'nt' else 'clear')
+
+        if self.is_blocked:
+            print("You are blocked from doing anything. Please contact administrations.")
 
         if activity == 'homepage':
             self.homepage()
@@ -209,11 +215,12 @@ class MainApp:
             http_payload = {
                 'email': email,
                 'password': password,
-                'session_id': self.session['id'],
+                'session_id': self.session['id']
             }
 
-            http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/user_login',
+            # 'https://us-central1-ssd-136542.cloudfunctions.net/user_login'
+            http_response = requests.get(
+                'https://us-central1-ssd-136542.cloudfunctions.net/user_login_wrong_password',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
@@ -230,8 +237,9 @@ class MainApp:
                 self.user['name'] = data.get('user_name')
                 is_tfa_enabled = data.get('is_tfa_enabled')
 
-            if status_code != 200:
+            if status_code != 200 and attempt == 3:
                 input("You are blocked! Returning to homepage.")
+                self.is_blocked = True
                 self.switch_menu('homepage')
 
             if is_tfa_enabled:

@@ -4,6 +4,7 @@
 import os
 import uuid
 import mysql.connector
+import logging
 
 def main(request):
     '''The main function of handling the user authentication request'''
@@ -71,6 +72,7 @@ def main(request):
 
     # Check if user_id is blocked due to malicious login attempt
     if is_blocked:
+        logging.info('User is blocked')
         return {
             'code': 401,
             'message': ("You or the credentials you are using is currently being blocked. "
@@ -93,6 +95,7 @@ def main(request):
     authenticated = bool(query_result.get('authenticated')) if query_result else False
 
     if authenticated:
+        logging.info('User is authenticated')
         # Generate token & insert into table as an acknowledge token
         auth_token = str(uuid.uuid4())
 
@@ -146,7 +149,8 @@ def main(request):
 
     cursor.execute(query)
     attempt_result = cursor.fetchone()
-    attempt_made = attempt_result.get('more_than_three')
+    attempt_made = attempt_result.get('more_than_three') if attempt_result else 0
+    is_blocked = False
 
     if int(attempt_made) == 1:
         query = (
