@@ -2,6 +2,8 @@
 # pylint: disable=duplicate-code
 '''The common fixture module'''
 import os
+import uuid
+import datetime
 import pytest
 import mysql.connector
 
@@ -33,6 +35,21 @@ def fake_user_data() -> dict[str, str]:
     '''Fetch a fake user data set'''
     return _generate_fake_user_data()
 
+@pytest.fixture(scope='function')
+def fake_business_data() -> dict[str, str]:
+    '''Fetch a fake business data set'''
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = f'SELECT * FROM {SECURED_DATABASE}.business_data LIMIT 1;'
+    cursor.execute(query)
+    result_set = cursor.fetchone()
+    conn.close()
+
+    return result_set
+
 @pytest.fixture(scope='class')
 def turncate_backend_users():
     '''Clear all backend user records from the testing database'''
@@ -48,7 +65,6 @@ def turncate_backend_users():
     cursor.execute(query)
     conn.commit()
     conn.close()
-
 
 @pytest.fixture(scope='class')
 def turncate_backend_user_login_logs():
@@ -120,6 +136,36 @@ def create_a_testing_user_account():
             (password, full_name, email, secondary_password, tfa_secret)
         VALUES
             ('{password}', '{full_name}', '{email}', '{secondary_password}', '654321');
+        """
+    )
+
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+
+@pytest.fixture(scope='class')
+def create_a_business_data_record():
+    '''Create a testing data'''
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
+
+    print(f'Creating a fake business data record to the {SECURED_DATABASE}.business_data table.')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    user_id = '1'
+    data_value = 3
+    data_details = 'This is sample data'
+    data_id = uuid.uuid4()
+    is_valid = 1
+    last_modified = str(datetime.datetime.now())[:-7]
+
+    query = (
+        f"""
+        INSERT INTO {SECURED_DATABASE}.business_data
+            (data_id, user_id, data_value, data_details, is_valid, last_modified)
+        VALUES
+            ('{data_id}',{user_id},{data_value},'{data_details}',{is_valid},'{last_modified}');
         """
     )
 
