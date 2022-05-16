@@ -435,10 +435,10 @@ class MainApp:
             self.switch_menu(activity='action')
         id_list = []
         count = 0
-        #print('='*40)
         print("="*156)
         print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
         print("|","-"*152,"|")
+        #Format the response to make it more readable
         if response:
             for i in response:
                 if i.get('is_valid') == 1:
@@ -447,50 +447,50 @@ class MainApp:
                     data_id=str(i.get('data_id')).ljust(38)
                     data_value=str(i.get('data_value')).ljust(20)
                     data_details=str(i.get('data_details')).ljust(50)
-                    #is_valid=str(i.get('is_valid')).ljust(7)
                     last_modified=str(i.get('last_modified')).ljust(30)
                     print("|",id,data_id,data_value,data_details,last_modified,"|")
-                    #print("ID:",count,     "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
                     id_list.append(i.get('data_id'))
             print("="*156)
         else:
             print("No active data entries for this user.")
             input("Press any key to return...")
             self.switch_menu(activity='action')
-        #print('='*40)
 
         status_code = 0
         update_action = 0
         data_value = 0
         data_details = 'text'
-
-        is_tfa_enabled = False
+        data_id = 0
 
         while status_code != 200:
             print("Which data do you want to update?")
-            data_id = input("Enter data ID: ")
 
-            #ADJUST
-            while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
-                print("Invalid ID entered")
+            #Loop until a valid input is received
+            while not data_id:
                 data_id = input("Please Enter the Data ID as displayed in the Data View:")
+                #Check if the input data_id is valid
+                if not data_id.isdigit() or int(data_id) <= 0 or int(data_id) > count:
+                    print("Invalid ID entered")
+                    data_id = 0
+                    continue
             print()
-            #http_payload = {
-            #    "user_id": self.user['id'],
-            #    'data_id': id_list[int(data_id) - 1],#data_id,
-            #    'update_action': '3',
-            #}
-            ###
-            while int(update_action) not in [1, 2]:
+
+            #Loop until a valid update action item is received
+            while not update_action:
                 print("I want to update... (1)data value (2)data details:")
                 update_action = input("Please Enter 1 or 2: ")
-                if int(update_action) not in [1, 2]:
+                if not update_action.isdigit() or int(update_action) not in [1, 2]:
                     print('Input is invalid...\n')
+                    update_action = 0
+                    continue
 
             if update_action == '1':
-                data_value = input("Enter new data value. (Number only): ")
-
-
+                while not data_value:
+                    data_value = input("Enter new data value. (Number only): ")
+                    if not data_value.isdigit():
+                        print("Data value can only be number")
+                        data_value=0
+                        continue
             elif update_action == '2':
                 data_details = input("Enter new data details: ")
 
