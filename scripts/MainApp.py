@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import uuid
 import os
+import sys
 import json
 import requests
 import pyotp
@@ -61,19 +62,22 @@ class MainApp:
         print('Welcome!\n')
         print('1. Login')
         print('2. Register\n')
-        user_input = '0'
+        print('0. Exit\n')
+        user_input = '-1'
 
         # Repeat until valid input
-        while int(user_input) not in [1, 2]:
+        while int(user_input) not in [0, 1, 2]:
             user_input = input('Please select a menu: ')
-
             if not user_input.isdigit():
                 print("Please give only the correct option.")
                 user_input = '0'
                 continue
             else:
-                if int(user_input) not in [1, 2]:
+                if int(user_input) not in [0, 1, 2]:
                     print('Input is invalid...\n')
+
+        if int(user_input) == 0:
+            sys.exit(0)
 
         menu_dict = {
             '1': 'login',
