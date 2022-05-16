@@ -613,24 +613,27 @@ class MainApp:
             response = json.loads(http_response.content)
             status_code = response.get('code')
             data = response.get('data')
+            if len(data)==0:
+                print("No data is available for download")
+            else:
+                #Convert data to excel format
+                df = pd.DataFrame(data)
+                cols = df.columns.tolist()
+                cols = cols[1:2] + cols[:1] + cols[2:]
+                df = df[cols]
+                df.rename(columns= {"data_id":"Data ID","data_details":"Data Details","data_value":"Data Value","is_valid":"Valid?","last_modified":"Last modified"}, inplace=True)
+                df.style.set_properties(align="left")
+                timestamp = datetime.now()
+                excel_writer = StyleFrame.ExcelWriter(f'{self.user["name"]}_{timestamp}.xlsx')
+                sf = StyleFrame(df)
+                sf.set_column_width(columns=['Data ID','Data Details','Last modified'],width=40)
+                sf.set_column_width(columns=['Data Value'],width=20)
+                sf.apply_column_style(cols_to_style=['Data ID','Data Details','Data Value','Last modified'],styler_obj=Styler(horizontal_alignment='left'),style_header=True)
+                sf.to_excel(excel_writer=excel_writer)
+                excel_writer.save()
+                print("Data downloaded.")
 
-            #Convert data to excel format
-            df = pd.DataFrame(data)
-            cols = df.columns.tolist()
-            cols = cols[1:2] + cols[:1] + cols[2:]
-            df = df[cols]
-            df.rename(columns= {"data_id":"Data ID","data_details":"Data Details","data_value":"Data Value","is_valid":"Valid?","last_modified":"Last modified"}, inplace=True)
-            df.style.set_properties(align="left")
-            timestamp = datetime.now()
-            excel_writer = StyleFrame.ExcelWriter(f'{self.user["name"]}_{timestamp}.xlsx')
-            sf = StyleFrame(df)
-            sf.set_column_width(columns=['Data ID','Data Details','Last modified'],width=40)
-            sf.set_column_width(columns=['Data Value'],width=20)
-            sf.apply_column_style(cols_to_style=['Data ID','Data Details','Data Value','Last modified'],styler_obj=Styler(horizontal_alignment='left'),style_header=True)
-            sf.to_excel(excel_writer=excel_writer)
-            excel_writer.save()
-
-        input('Data downloaded. Press any key to continue...')
+        input('Press any key to continue...')
         return self.switch_menu(activity='action')
 
 
