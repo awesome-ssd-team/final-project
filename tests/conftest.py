@@ -115,6 +115,38 @@ def turncate_users():
     conn.close()
 
 @pytest.fixture(scope='class')
+def turncate_business_data():
+    '''Clear all business data records from the testing database'''
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
+
+    print(f'Turncating all user records from the {SECURED_DATABASE}.business_data table.')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = f"TRUNCATE {SECURED_DATABASE}.business_data;"
+
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+
+@pytest.fixture(scope='class')
+def turncate_business_data():
+    '''Clear all business data records from the testing database'''
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
+
+    print(f'Turncating all business data records from the {SECURED_DATABASE}.business_data table.')
+
+    conn = _fetch_database_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = f"TRUNCATE {SECURED_DATABASE}.business_data;"
+
+    cursor.execute(query)
+    conn.commit()
+    conn.close()
+
+@pytest.fixture(scope='class')
 def create_a_testing_user_account():
     '''Create a testing user account'''
     SECURED_DATABASE = os.environ.get('SECURED_DATABASE')

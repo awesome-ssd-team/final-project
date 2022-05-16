@@ -9,6 +9,7 @@ def main(request):
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
     conn = mysql.connector.connect(
         host=MYSQL_HOST,
@@ -33,7 +34,7 @@ def main(request):
 
         query = (
             f"""
-            UPDATE secured.business_data
+            UPDATE {SECURED_DATABASE}.business_data
             SET data_value = {data_value},
                 last_modified = CURRENT_TIMESTAMP()
             WHERE user_id = {user_id} AND data_id = '{data_id}';
@@ -57,7 +58,7 @@ def main(request):
         # Add attempt to user_login_logs
         query = (
             f"""
-            UPDATE secured.business_data
+            UPDATE {SECURED_DATABASE}.business_data
             SET data_details = '{data_details}',
                 last_modified = CURRENT_TIMESTAMP()
             WHERE user_id = {user_id} AND data_id = '{data_id}'
@@ -81,7 +82,7 @@ def main(request):
 
         query = (
             f"""
-            UPDATE secured.business_data
+            UPDATE {SECURED_DATABASE}.business_data
             SET is_valid = '0',
                 last_modified = CURRENT_TIMESTAMP()
             WHERE user_id = {user_id} AND data_id = '{data_id}'
