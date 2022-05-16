@@ -388,10 +388,14 @@ class MainApp:
         data_value = 0
         data_details = ''
 
-
         while status_code != 200:
+            #Loop until valid input is received
             while not data_value:
                 data_value = input("Enter data value:")
+                if not data_value.isdigit():
+                    print("Data value must be number")
+                    data_value=0
+                    continue
             while not data_details:
                 data_details = input("Enter data details:")
 
@@ -401,12 +405,14 @@ class MainApp:
                 'data_details': data_details
             }
 
+            #Send payload to cloud function to add data for a specific user
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/add_data',
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
 
+            #Extract the information returned from cloud function
             response = json.loads(http_response.content)
             status_code = response.get('code')
             message = response.get('message')
