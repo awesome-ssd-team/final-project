@@ -535,6 +535,7 @@ class MainApp:
             self.switch_menu(activity='action')
 
         count = 0
+        #Format response to more readable
         print("="*156)
         print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
         print("|","-"*152,"|")
@@ -546,10 +547,8 @@ class MainApp:
                     data_id=str(i.get('data_id')).ljust(38)
                     data_value=str(i.get('data_value')).ljust(20)
                     data_details=str(i.get('data_details')).ljust(50)
-                    #is_valid=str(i.get('is_valid')).ljust(7)
                     last_modified=str(i.get('last_modified')).ljust(30)
                     print("|",id,data_id,data_value,data_details,last_modified,"|")
-                    #print("ID:",count,     "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
                     id_list.append(i.get('data_id'))
             print("="*156)
         else:
@@ -558,27 +557,17 @@ class MainApp:
             self.switch_menu(activity='action')
 
 
-        #print('='*40)
-        #count = 0
-        #for i in response:
-        #    if i.get('is_valid') == 1:
-        #        count = count + 1
-        #        print("ID:", count, "Data_id:",i.get('data_id'), "     DATA VALUE:", i.get('data_value'), "     DESCRIPTION:", i.get('data_details'))
-        #        id_list.append(i.get('data_id'))
-        #    else:
-        #        print("No active data entries for this user.")
-        #        input("Press any key to return...")
-        #        self.switch_menu(activity='action')
-        #print('='*40)
         status_code = 0
+        data_id = 0
         while status_code != 200:
             print("Which data entry do you want to delete?")
             #DO QUERY HERE TO DISPLAY DATA ENTRIES... OR DO THE QUERY ON TOP...
-            data_id = input("Enter the ID: ")
-
-            while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
-                print("Invalid ID entered")
-                data_id = input("Please Enter the Data ID as displayed in the Data View:")
+            while not data_id:
+                data_id = input("Please Enter the Data ID as displayed in the Data View: ")
+                if not data_id.isdigit() or int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
+                    print("Invalid ID entered")
+                    data_id = 0
+                    continue
             print()
             #send_data = id_list[]
             http_payload = {
