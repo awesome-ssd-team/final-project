@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 import uuid
 import os
+import sys
 import json
 import requests
 import pyotp
@@ -58,13 +59,17 @@ class MainApp:
         print('Welcome!\n')
         print('1. Login')
         print('2. Register\n')
-        user_input = '0'
+        print('0. Exit\n')
+        user_input = '-1'
 
         # Repeat until valid input
-        while int(user_input) not in [1, 2]:
+        while int(user_input) not in [0, 1, 2]:
             user_input = input('Please select a menu: ')
-            if int(user_input) not in [1, 2]:
+            if int(user_input) not in [0, 1, 2]:
                 print('Input is invalid...\n')
+
+        if int(user_input) == 0:
+            sys.exit(0)
 
         menu_dict = {
             '1': 'login',
@@ -134,7 +139,7 @@ class MainApp:
             '3': 'delete',
             '4': 'download'
         }
-        
+
         kwargs = {}
         for i in data:
             kwargs[str(i.get('data_id'))]=i
@@ -433,7 +438,7 @@ class MainApp:
 
         while status_code != 200:
             print("Which data do you want to update?")
-            data_id = input("Enter data ID: ") 
+            data_id = input("Enter data ID: ")
 
             #ADJUST
             while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
@@ -539,7 +544,7 @@ class MainApp:
         while status_code != 200:
             print("Which data entry do you want to delete?")
             #DO QUERY HERE TO DISPLAY DATA ENTRIES... OR DO THE QUERY ON TOP...
-            data_id = input("Enter the ID: ") 
+            data_id = input("Enter the ID: ")
 
             while int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
                 print("Invalid ID entered")
@@ -557,7 +562,7 @@ class MainApp:
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
-            
+
             response = json.loads(http_response.content)
             status_code = response.get('code')
             message = response.get('message')
