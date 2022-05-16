@@ -44,7 +44,7 @@ class MainApp:
                 'user_login': os.getenv('USER_LOGIN_URL'),
                 'verify_otp': os.getenv('VERIFY_OTP'),
                 'setup_otp': os.getenv('SETUP_OTP'),
-                'view_data': os.getenv('VIEW_DATA'),
+                'retrieve_data': os.getenv('RETRIEVE_DATA'),
                 'add_data': os.getenv('ADD_DATA'),
                 'update_data': os.getenv('UPDATE_DATA'),
             },
@@ -144,7 +144,7 @@ class MainApp:
             }
             # Retrieving data from cloud function using user id
             http_response = requests.post(
-                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['view_data']}",
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_data']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )

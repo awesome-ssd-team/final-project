@@ -18,7 +18,6 @@ class TestMainApplication:
         with open(f'{os.getcwd()}/tests/steps/{steps_filename}', 'r', encoding='utf-8') as steps:
             for step in steps.readlines():
                 input_values.append(re.sub('\n', '', step))
-            # steps.close()
 
     def _mock_input(self, s, input_values, output):
         '''Mock user\'s input'''
