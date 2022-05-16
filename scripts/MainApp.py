@@ -220,6 +220,7 @@ class MainApp:
         attempt = 0
         is_tfa_enabled = False
 
+        #Display the input prompt for email and password
         while status_code != 200 and attempt < 3:
             email = input("Enter your email: ")
             password = getpass(prompt="Enter your password: ")
@@ -230,6 +231,7 @@ class MainApp:
                 'session_id': self.session['id']
             }
 
+            #Sending the payload to cloud function
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/user_login',
                 headers={"Content-Type": "application/json"},
@@ -242,6 +244,7 @@ class MainApp:
             data = response.get('data')
             print(message)
 
+            #Save user details to variables if the login is successful
             if status_code == 200:
                 tmp_auth_token = data.get("auth_token")
                 self.user['id'] = data.get('user_id')
