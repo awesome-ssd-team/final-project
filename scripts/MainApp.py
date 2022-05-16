@@ -70,7 +70,7 @@ class MainApp:
             user_input = input('Please select a menu: ')
             if not user_input.isdigit():
                 print("Please give only the correct option.")
-                user_input = '0'
+                user_input = '-1'
                 continue
             else:
                 if int(user_input) not in [0, 1, 2]:
