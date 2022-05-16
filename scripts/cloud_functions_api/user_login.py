@@ -53,6 +53,13 @@ def main(request):
     is_tfa_enabled = bool(user_id_result.get('is_tfa_enabled')) if user_id_result else None
     user_id_value = user_id if user_id is not None else 'NULL'
 
+    #No record matches with user inputted email
+    if user_id == None or user_name == None:
+        return {
+        'code': 406,
+        'message': 'The email is not correct.'
+    }
+
     # Add attempt to user_login_logs
     query = (
         f"""
