@@ -1,21 +1,26 @@
+# pylint: disable=invalid-name
+# pylint: disable=duplicate-code
+'''The Cloud Functions module for handling adding business data'''
 import os
-import mysql.connector
 import uuid
 import datetime
+import mysql.connector
 
 def main(request):
+    '''The main function of handling the user adding business data'''
     request_json = request.get_json()
 
     # Connect to MySQL
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
     conn = mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database='secured'
+        database=SECURED_DATABASE,
     )
 
     cursor = conn.cursor(dictionary=True)
@@ -32,8 +37,10 @@ def main(request):
     # Add data to database
     query = (
         f"""
-        INSERT INTO secured.business_data (data_id, user_id, data_value, data_details, is_valid, last_modified)
-        VALUES ('{data_id}',{user_id},{data_value},'{data_details}',{is_valid},'{last_modified}');
+        INSERT INTO {SECURED_DATABASE}.business_data
+            (data_id, user_id, data_value, data_details, is_valid, last_modified)
+        VALUES
+            ('{data_id}',{user_id},{data_value},'{data_details}',{is_valid},'{last_modified}');
         """
     )
     print("DEBUG",query)
