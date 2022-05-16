@@ -53,6 +53,18 @@ def main(request):
     is_tfa_enabled = bool(user_id_result.get('is_tfa_enabled')) if user_id_result else None
     user_id_value = user_id if user_id is not None else 'NULL'
 
+    # Add attempt to user_login_logs
+    query = (
+        f"""
+            INSERT INTO {BACKEND_DATABASE}.user_login_logs
+                (user_id, session_id)
+            VALUES
+                ({user_id_value}, '{session_id}');
+            """
+    )
+    cursor.execute(query)
+    conn.commit()
+
     # Check if credentials is blocked
     query = (
         f"""
@@ -120,23 +132,11 @@ def main(request):
             }
         }
 
-    # Add attempt to user_login_logs
-    query = (
-        f"""
-        INSERT INTO {BACKEND_DATABASE}.user_login_logs
-            (user_id, session_id)
-        VALUES
-            ({user_id_value}, '{session_id}');
-        """
-    )
-    cursor.execute(query)
-    conn.commit()
-
     # Check if attempt by device >= 3. Add to block if yes.
     query = (
         f"""
         SELECT
-            (COUNT(*) >= 3) AS more_than_three
+            (COUNT(*) > 3) AS more_than_three
         FROM
             {BACKEND_DATABASE}.user_login_logs
         WHERE
@@ -146,7 +146,9 @@ def main(request):
 
     cursor.execute(query)
     attempt_result = cursor.fetchone()
-    attempt_made = attempt_result.get('more_than_three')
+    attempt_made = attempt_result.get('more_than_three') if attempt_result else 0
+
+    print(f'attempt_made: {attempt_made}')
 
     if int(attempt_made) == 1:
         query = (
