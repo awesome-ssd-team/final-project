@@ -1,5 +1,6 @@
 # pylint: disable=invalid-name
 '''The main application module'''
+# Importing the libraries the application needs
 from getpass import getpass
 from datetime import datetime, timedelta
 
@@ -16,6 +17,7 @@ from styleframe import StyleFrame, Styler
 class MainApp:
     '''The main application'''
     def __init__(self):
+        # Initialize the session and user information
         now = datetime.now()
         expired_at =  now + timedelta(minutes=30)
         self.session = {
@@ -33,11 +35,14 @@ class MainApp:
         self.is_blocked = False
         self.homepage()
 
+    # Switch to different pages according to user action
     def switch_menu(self, activity, **kwargs):
         '''Switch menu based on the current activity'''
 
+        # Clear the terminal
         os.system('cls' if os.name == 'nt' else 'clear')
 
+        # Conditions to check the user action to provide appropriate functions
         if activity == 'homepage':
             self.homepage()
         elif activity == 'register':
@@ -57,6 +62,7 @@ class MainApp:
         elif activity == 'download':
             self.download_page()
         elif activity == 'logout':
+            # Clear out user information
             self.user = {
             'id': None,
             'name': None,
@@ -64,17 +70,19 @@ class MainApp:
             }
             self.homepage()
 
+    # Homepage for user to select login or register
     def homepage(self):
-        '''Display the home page'''
+        '''Display the home page for user to login to register'''
         print('Welcome!\n')
         print('1. Login')
         print('2. Register\n')
         print('0. Exit\n')
         user_input = '-1'
 
-        # Repeat until valid input
+        # Repeat input prompt until valid input
         while int(user_input) not in [0, 1, 2]:
             user_input = input('Please select a menu: ')
+            # Check if the user is inputting number, if not, prompt user to input correct number
             if not user_input.isdigit():
                 print("Please give only the correct option.")
                 user_input = '-1'
@@ -86,6 +94,7 @@ class MainApp:
         if int(user_input) == 0:
             sys.exit(0)
 
+        # Store the action in dictionary for switch use
         menu_dict = {
             '1': 'login',
             '2': 'register'
@@ -93,8 +102,9 @@ class MainApp:
 
         return self.switch_menu(menu_dict[user_input])
 
+    # Page that allows user to view data and manipulate with data
     def action_page(self):
-        '''Display the data view'''
+        '''Display the data view of the user and provides options for user to add, update, delete and download data'''
         status_code = None
 
         print('='*40)
@@ -106,18 +116,18 @@ class MainApp:
                 "user_id": self.user['id']
             }
 
+            # Retrieving data from cloud function using user id
             http_response = requests.post(
-                #'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
                 'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_data',
                 headers={"Content-Type": "application/json"},
-                data=json.dumps(http_payload)  # possible request parameters
+                data=json.dumps(http_payload)
             )
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
-            message = response.get('message')
             data = response.get('data')
             kwargs = data
+            # Display the data view
             print()
             print("="*153)
             print("|","Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(30),"|")
@@ -131,7 +141,7 @@ class MainApp:
                 print("|",data_id,data_value,data_details,is_valid,last_modified,"|")
             print("="*153)
 
-        '''Display the action page'''
+        # Display the action menu for user
         print('='*40)
         print('What action you would like to take?')
         print('='*40)
@@ -163,18 +173,23 @@ class MainApp:
             kwargs[str(i.get('data_id'))]=i
         return self.switch_menu(menu_dict[user_action_input], **kwargs)
 
+    # Page for user to register
     def registration_page(self):
         '''Display the registration page'''
 
         status_code = None
 
         while status_code != 200:
+            # Getting user info - name and email
             user_full_name = input('Your full name: ')
             user_email = input('Your email: ')
 
+            # Setting up the first password
             user_password = 'a'
             user_password_confirm = 'b'
 
+            # Loop until the password typed first time matches with the password typed the second time
+            # Reduce risk of mistyping password
             while user_password_confirm != user_password:
                 user_password = getpass("Enter your password: ")
                 user_password_confirm = getpass("Confirm your password: ")
@@ -182,9 +197,11 @@ class MainApp:
                 if user_password != user_password_confirm:
                     print("Password doesn't match!")
 
+            # Setting up the second password
             user_secondary_password = 'a'
             user_secondary_password_confirm = 'b'
 
+            # Loop until the password typed first time matches with the password typed the second time
             while user_secondary_password != user_secondary_password_confirm:
                 user_secondary_password = getpass('Set a secondary password: ')
                 user_secondary_password_confirm = getpass('Confirm your secondary password: ')
@@ -199,10 +216,11 @@ class MainApp:
                 "secondary_password": user_secondary_password
             }
 
+            # Saving the user data into database
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
                 headers={"Content-Type": "application/json"},
-                data=json.dumps(http_payload)  # possible request parameters
+                data=json.dumps(http_payload)
             )
 
             response = json.loads(http_response.content)
@@ -211,19 +229,20 @@ class MainApp:
 
             print(message)
 
+        # Setting up TFA
         setup_tfa = ''
 
         while setup_tfa.lower() not in ['y', 'n']:
             print("We suggest you to setup Two Factor Authorization (TFA) to secure your account.")
             setup_tfa = input("Do you want to set it up now? (y/n): ")
 
+        # If user selects yes, he/she will be directed to the set up tfa page
         if setup_tfa == 'y':
             return self.switch_menu(activity='setup_tfa', user_email=user_email)
-
-        # Comment out because it is an unused variable
-        # user_input = input('Press enter to go back to homepage...')
+        # else the user will be directed back to the homepage
         return self.switch_menu('homepage')
 
+    # Login page for user to login
     def login_page(self):
         '''Display the login page'''
         status_code = 0
@@ -245,7 +264,7 @@ class MainApp:
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/user_login',
                 headers={"Content-Type": "application/json"},
-                data=json.dumps(http_payload)  # possible request parameters
+                data=json.dumps(http_payload)
             )
 
             response = json.loads(http_response.content)
@@ -266,35 +285,30 @@ class MainApp:
                 self.is_blocked = True
                 self.switch_menu('homepage')
 
+            # For user with TFA enable, check if the MFA code matches
             if status_code == 200 and is_tfa_enabled:
-                # Comment out because it is an unused variable
-                # query = (
-                #     f"""
-                #     SELECT tfa_scret FROM secured.users
-                #     WHERE user_id = {self.user_id}
-                #     """
-                # )
-
                 http_payload = {
                     'user_id': self.user['id']
                 }
 
+                # Getting the tfa secret saved in the database when setting up TFA
                 http_response = requests.post(
                     'https://us-central1-ssd-136542.cloudfunctions.net/verify_otp',
                     headers={"Content-Type": "application/json"},
-                    data=json.dumps(http_payload)  # possible request parameters
+                    data=json.dumps(http_payload)
                 )
 
                 response = json.loads(http_response.content)
                 status_code = response.get('code')
-                # message = response.get('message') # Comment out because it is an unused variable
                 data = response.get('data')
                 tfa_secret = data.get('tfa_secret')
 
+                # Generate the MFA code
                 totp = pyotp.TOTP(tfa_secret)
                 passed = False
                 attempt = 0
 
+                # User has 3 chances to imput the correct MFA code
                 while not passed and attempt < 3:
                     totp_input = str(input('Enter your MFA code: '))
 
@@ -307,27 +321,32 @@ class MainApp:
 
                 if passed:
                     self.user['auth_token'] = tmp_auth_token
-                    print(f"Hi {self.user['name']}! You are logged in, yay!")
+                    input(f"Hi {self.user['name']}! You are logged in! Press any key to continue...")
                     return self.switch_menu(activity='action')
+            # Prompt user to set up TFA if not yet set up
             elif status_code == 200 and not is_tfa_enabled:
                 print('TFA is not enabled! Please enable TFA...')
                 input('Press enter to proceed...')
                 return self.switch_menu(activity='setup_tfa', user_email=email, tmp_auth_token=tmp_auth_token)
 
+        # Failure in login and redirect the user back to homepage
         attempt = attempt + 1
         print("Failed login attempt. Returning to homepage.")
         input('Press enter to proceed.')
         return self.switch_menu(activity='homepage')
 
+    # Page for user to set up TFA
     def setup_tfa(self, **kwargs):
         '''Set up the two factor authentication for users'''
         user_email = kwargs.get('user_email')
         tmp_auth_token = kwargs.get('tmp_auth_token')
         base32secret = kwargs.get('base32secret')
 
+        # Generate a base32 string secret for later MFA set up
         is_retry = True if base32secret else False
         base32secret = base32secret if base32secret else pyotp.random_base32()
 
+        # Generate the URI for the qr code that user scans
         totp_uri = pyotp.totp.TOTP(base32secret).provisioning_uri(
             user_email,
             issuer_name="Secure App")
@@ -345,11 +364,13 @@ class MainApp:
         print("Prepare your phone and be ready to scan an image with your authentication app.")
         print("After that, input the code to verify the setup.")
         input("Press enter to continue...")
+        # Show the QR code image to user to scan
         img.show()
 
         passed = False
         attempt = 0
 
+        # Verify the user's device is generating the correct code
         while passed is False and attempt < 3:
             otp_input = input("Enter the code: ")
 
@@ -376,7 +397,7 @@ class MainApp:
         http_response = requests.post(
             'https://us-central1-ssd-136542.cloudfunctions.net/setup_otp',
             headers={"Content-Type": "application/json"},
-            data=json.dumps(http_payload)  # possible request parameters
+            data=json.dumps(http_payload)
         )
 
         response = json.loads(http_response.content)
@@ -388,10 +409,11 @@ class MainApp:
             input('Success! Press enter to go to homepage.')
             return self.switch_menu(activity='homepage')
         else:
-            input("Yay, TFA setup, let's continue!")
+            input('Success! Press enter to go to homepage.')
             self.user['auth_token'] = tmp_auth_token
             return self.switch_menu(activity='action')
 
+    # Page for user to add data
     def add_page(self):
         '''Display the add data page'''
         status_code = 0
@@ -431,6 +453,7 @@ class MainApp:
         input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
 
+    # Page for user to update his/her business data
     def update_page(self, **kwargs):
         '''Display the update page'''
         response = []
@@ -448,6 +471,7 @@ class MainApp:
         print("="*156)
         print("|","ID".ljust(10), "Data ID".ljust(38),"Data Value".ljust(20),"Data Details".ljust(50),"Valid".ljust(7),"Last Modified".ljust(22),"|")
         print("|","-"*152,"|")
+
         #Format the response to make it more readable
         if response:
             for i in response:
@@ -494,6 +518,7 @@ class MainApp:
                     update_action = 0
                     continue
 
+            # Check user whether data value or data details needs to be updated
             if update_action == '1':
                 while not data_value:
                     data_value = input("Enter new data value. (Number only): ")
@@ -512,26 +537,29 @@ class MainApp:
                 'data_details': data_details
             }
 
+            # Sending request to cloud function to update the data
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/update_data',
                 headers={"Content-Type": "application/json"},
-                data=json.dumps(http_payload)  # possible request parameters
+                data=json.dumps(http_payload)
             )
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
             message = response.get('message')
 
-            #print(status_code)
             print(message)
 
-        next = input("Press any key to proceed: ")
+        # Action finishes and redirect user back to action menu
+        input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
 
+    # Page for user to delete data
     def delete_data(self, **kwargs):
         '''Display the delete_data page'''
+        # Clear terminal
         os.system('cls' if os.name == 'nt' else 'clear')
-        #UNPACK KWARGS:
+        #Unpack kwargs:
         response = []
         for key, value in kwargs.items():
             response.append(value)
@@ -571,21 +599,21 @@ class MainApp:
         data_id = 0
         while status_code != 200:
             print("Which data entry do you want to delete?")
-            #DO QUERY HERE TO DISPLAY DATA ENTRIES... OR DO THE QUERY ON TOP...
+            # Getting the data_id that user wants to delete
             while not data_id:
                 data_id = input("Please Enter the Data ID as displayed in the Data View: ")
-                if not data_id.isdigit() or int(data_id) <= 0 or int(data_id) > count: #int(data_id) not in id_list:
+                if not data_id.isdigit() or int(data_id) <= 0 or int(data_id) > count:
                     print("Invalid ID entered")
                     data_id = 0
                     continue
             print()
-            #send_data = id_list[]
             http_payload = {
                 "user_id": self.user['id'],
-                'data_id': id_list[int(data_id) - 1],#data_id,
+                'data_id': id_list[int(data_id) - 1],
                 'update_action': '3',
             }
 
+            # Sending request to cloud function to update data is_valid to false
             http_response = requests.post(
                 'https://us-central1-ssd-136542.cloudfunctions.net/update_data',
                 headers={"Content-Type": "application/json"},
@@ -598,12 +626,11 @@ class MainApp:
 
             print(message)
 
-        next = input("Press any key to proceed: ")
+        input("Press any key to proceed: ")
         return self.switch_menu(activity='action')
 
-        self.action_page()
 
-
+    # Page to user to download his/her data
     def download_page(self):
         '''Display the download page'''
         status_code = 0
@@ -612,32 +639,41 @@ class MainApp:
             http_payload = {
                 "user_id": self.user['id']
             }
+
+            #Retrieving data from cloud function
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/register_user-2',
+                'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_data',
                 headers={"Content-Type": "application/json"},
-                data=json.dumps(http_payload)  # possible request parameters
+                data=json.dumps(http_payload)
             )
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
             data = response.get('data')
+
+            # If no data is returned, abort action and redirect user back to action menu
             if len(data)==0:
                 print("No data is available for download")
             else:
                 #Convert data to excel format
                 df = pd.DataFrame(data)
                 cols = df.columns.tolist()
+                # Reorder the columns
                 cols = cols[1:2] + cols[:1] + cols[2:]
                 df = df[cols]
+                # Style the excel
                 df.rename(columns= {"data_id":"Data ID","data_details":"Data Details","data_value":"Data Value","is_valid":"Valid?","last_modified":"Last modified"}, inplace=True)
                 df.style.set_properties(align="left")
+                # Write to excel with user name and timestamp as filename
                 timestamp = datetime.now()
                 excel_writer = StyleFrame.ExcelWriter(f'{self.user["name"]}_{timestamp}.xlsx')
+                # Style the excel
                 sf = StyleFrame(df)
                 sf.set_column_width(columns=['Data ID','Data Details','Last modified'],width=40)
                 sf.set_column_width(columns=['Data Value'],width=20)
                 sf.apply_column_style(cols_to_style=['Data ID','Data Details','Data Value','Last modified'],styler_obj=Styler(horizontal_alignment='left'),style_header=True)
                 sf.to_excel(excel_writer=excel_writer)
+                # Excel file will be downloaded to the current working directory
                 excel_writer.save()
                 print("Data downloaded.")
 
