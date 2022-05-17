@@ -29,9 +29,8 @@ def main(request):
             data_id,
             data_value,
             data_details,
-            is_valid,
-            created_at,
-            modified_at as last_modified
+            CAST(created_at AS CHAR) AS created_at,
+            CAST(modified_at AS CHAR) AS last_modified
         FROM secured.business_data_fix
         WHERE user_id = '{user_id}' AND is_valid = 1;
         """
