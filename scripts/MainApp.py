@@ -56,6 +56,13 @@ class MainApp:
             self.delete_data(**kwargs)
         elif activity == 'download':
             self.download_page()
+        elif activity == 'logout':
+            self.user = {
+            'id': None,
+            'name': None,
+            'auth_token': None,
+            }
+            self.homepage()
 
     def homepage(self):
         '''Display the home page'''
@@ -133,19 +140,22 @@ class MainApp:
         print('2. Update Data')
         print('3. Delete Data ')
         print('4. Download Data\n')
-        user_action_input = '0'
+        print('5. Logout\n')
+        user_action_input = 0
 
         # Repeat until valid input
-        while int(user_action_input) not in [1, 2, 3, 4]:
+        while not user_action_input:
             user_action_input = input('Please select a menu: ')
-            if int(user_action_input) not in [1, 2, 3, 4]:
+            if not user_action_input.isdigit() or int(user_action_input) not in [1, 2, 3, 4,5]:
                 print('Input is invalid...\n')
+                user_action_input = 0
 
         menu_dict = {
             '1': 'add',
             '2': 'update',
             '3': 'delete',
-            '4': 'download'
+            '4': 'download',
+            '5': 'logout'
         }
 
         kwargs = {}
