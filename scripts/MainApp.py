@@ -339,7 +339,7 @@ class MainApp:
         #Display the input prompt for email and password
         while status_code != 200 and attempt < 3:
             email = input("Enter your email: ")
-            password = getpass(prompt="Enter your password: ")
+            password = getpass("Enter your password: ")
 
             http_payload = {
                 'email': email,
@@ -455,6 +455,8 @@ class MainApp:
                 passed = False
                 totp_attempt = 0
 
+                self._print_test_messages(f'OTP:{str(totp.now())}')
+
                 # User has 3 chances to imput the correct MFA code
                 while not passed and totp_attempt < 3:
                     print(str(totp.now()))
@@ -516,8 +518,12 @@ class MainApp:
         print("Prepare your phone and be ready to scan an image with your authentication app.")
         print("After that, input the code to verify the setup.")
         input("Press enter to continue...")
-        # Show the QR code image to user to scan
-        img.show()
+
+        if not self.configs['is_test']:
+            # Show the QR code image to user to scan
+            img.show()
+
+        self._print_test_messages(f'OTP:{str(totp.now())}')
 
         passed = False
         attempt = 0
