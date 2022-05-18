@@ -64,7 +64,7 @@ class TestUserLogin:
 
         login_attempt = 0
 
-        while login_attempt < 3:
+        while login_attempt < 4:
             print(f'Trying to login with {login_attempt + 1} attempt.')
 
             request = Mock(get_json=Mock(return_value=data), args=data)
