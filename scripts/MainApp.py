@@ -56,6 +56,7 @@ class MainApp:
         if self.configs['is_test']:
             print(payload)
 
+    # Switch to different pages according to user action
     def switch_menu(self, activity, **kwargs):
         '''Switch menu based on the current activity'''
         # Clear the terminal
