@@ -300,15 +300,11 @@ class MainApp:
             }
 
             # Saving the user data into database
-            self._print_test_messages(http_payload)
-
             http_response = requests.post(
                 f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['register_user']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
-
-            self._print_test_messages(http_response.text)
 
             response = json.loads(http_response.content)
             status_code = response.get('code')
@@ -659,7 +655,10 @@ class MainApp:
 
                 data_id_select_passed = True
 
-            print()
+            if not self.configs['is_test']:
+                print()
+            else:
+                print('')
 
             # Loop until a valid update action item is received
             while not update_action:
