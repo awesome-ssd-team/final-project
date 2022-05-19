@@ -330,7 +330,7 @@ class MainApp:
         '''Display the login page'''
         status_code = 0
         attempt = 0
-        # is_tfa_enabled = False
+        is_tfa_enabled = False
 
         #Display the input prompt for email and password
         while status_code != 200 and attempt < 3:
