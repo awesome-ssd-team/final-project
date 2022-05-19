@@ -18,9 +18,21 @@
   $ pip install -r requirements.txt
   ```
 
-5. Run the development server:
+4. Setup the environment configuration
   ```
-  $ python main.py
+  cp .env.example .env
   ```
 
-6. The main menu will be shown on the terminal window
+5. Update the values for the .env file
+
+6. Run the development client application:
+  ```
+  $ dotenv run -- python main.py
+  ```
+
+7. The main menu will be shown on the terminal window
+
+8. Run test
+  ```
+  $ tox -e all
+  ```
