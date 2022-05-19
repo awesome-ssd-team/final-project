@@ -50,6 +50,15 @@ def fake_business_data() -> dict[str, str]:
 
     return result_set
 
+@pytest.fixture(scope='function')
+def clear_downloaded_excel_files():
+    '''Clear all downloaded Excel files'''
+    current_directory = os.getcwd()
+    all_files = next(os.walk(current_directory), (None, None, []))[2]
+    for f in all_files:
+        if f.endswith('.xlsx'):
+            os.remove(f'{current_directory}/{f}')
+
 @pytest.fixture(scope='class')
 def turncate_backend_users():
     '''Clear all backend user records from the testing database'''

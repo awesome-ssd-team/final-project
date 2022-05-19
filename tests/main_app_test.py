@@ -25,15 +25,8 @@ class TestMainApplication:
             for step in steps.readlines():
                 input_values.append(re.sub('\n', '', step))
 
-    def _mock_input(self, s, input_values, output, sequences=None):
+    def _mock_input(self, s, input_values, output):
         '''Mock user\'s input'''
-
-        def _append_sequences(inp, oup):
-            if sequences is not None:
-                sequences.append({
-                    'output': inp,
-                    'input': oup,
-                })
 
         print(f'Asking for input: {s}')
         print(f'Current input values: {input_values}')
@@ -46,20 +39,23 @@ class TestMainApplication:
             for code in output:
                 if code.startswith('OTP:'):
                     mfa_code = re.sub('OTP:', '', code)
-                    _append_sequences(s, mfa_code)
                     output.remove(code)
                     return mfa_code
-
-        _append_sequences(s, input_values[0])
 
         return input_values.pop(0)
 
     def _extract_uuid(self, s):
+        '''
+        Extract the UUID value from the input
+        '''
         match_uuid_regex = re.compile(TestMainApplication.UUID_PATTERN)
         result = match_uuid_regex.findall(s)
         return result[0] if len(result) > 0 else None
 
     def _replace_uuid(self, replace_with, s):
+        '''
+        Replace the UUID value with the replacement string for the input
+        '''
         result = re.sub(
             TestMainApplication.UUID_PATTERN,
             replace_with,
@@ -68,6 +64,9 @@ class TestMainApplication:
         return str(result)
 
     def _extract_datetime(self, s, first_result=True):
+        '''
+        Extract the datetime string from the input
+        '''
         match_uuid_regex = re.compile(TestMainApplication.DATETIME_PATTENT)
         result = match_uuid_regex.findall(s)
         if len(result) > 0:
@@ -84,6 +83,9 @@ class TestMainApplication:
         return None
 
     def _replace_datetime(self, replace_with, s):
+        '''
+        Replace the datetime with the replacement string for the input
+        '''
         result = re.sub(
             TestMainApplication.DATETIME_PATTENT,
             replace_with,
@@ -145,8 +147,6 @@ class TestMainApplication:
             MainApp.MainApp()
             assert e.type == SystemExit
             assert e.value.code != 1
-
-        print(output)
 
         assert output == [
             'Welcome!\n',
@@ -374,7 +374,7 @@ class TestMainApplication:
             'Please select a menu: '
         ]
 
-    def test_download_data(self):
+    def test_download_data(self, clear_downloaded_excel_files):
         '''
         Test the scenario of downloading data
         '''
@@ -391,6 +391,8 @@ class TestMainApplication:
             MainApp.MainApp()
             assert e.type == SystemExit
             assert e.value.code != 1
+
+        clear_downloaded_excel_files
 
         existing_id = self._extract_uuid('___'.join(output))
         existing_datetime = self._extract_datetime('____'.join(output))
