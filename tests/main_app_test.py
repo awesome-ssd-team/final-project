@@ -8,14 +8,14 @@ import pytest
 
 from scripts import MainApp
 
-@pytest.mark.usefixtures('turncate_backend_users')
-@pytest.mark.usefixtures('turncate_backend_user_login_logs')
-@pytest.mark.usefixtures('turncate_backend_blocked_sessions')
-@pytest.mark.usefixtures('turncate_business_data')
-@pytest.mark.usefixtures('turncate_users')
+@pytest.mark.usefixtures('truncate_backend_users')
+@pytest.mark.usefixtures('truncate_backend_user_login_logs')
+@pytest.mark.usefixtures('truncate_backend_blocked_sessions')
+@pytest.mark.usefixtures('truncate_business_data')
+@pytest.mark.usefixtures('truncate_users')
 class TestMainApplication:
     UUID_PATTERN = r'[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}'
-    DATETIME_PATTENT = r'(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT'
+    DATETIME_PATTEN = r'(Mon|Tue|Wed|Thu|Fri|Sat|Sun), (\d{2}) (Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?) (\d{4}) (\d{2}):(\d{2}):(\d{2}) GMT'
 
     '''The end to end test cases group'''
 
@@ -67,7 +67,7 @@ class TestMainApplication:
         '''
         Extract the datetime string from the input
         '''
-        match_uuid_regex = re.compile(TestMainApplication.DATETIME_PATTENT)
+        match_uuid_regex = re.compile(TestMainApplication.DATETIME_PATTEN)
         result = match_uuid_regex.findall(s)
         if len(result) > 0:
             idx = 0 if first_result else len(result) - 1
@@ -87,7 +87,7 @@ class TestMainApplication:
         Replace the datetime with the replacement string for the input
         '''
         result = re.sub(
-            TestMainApplication.DATETIME_PATTENT,
+            TestMainApplication.DATETIME_PATTEN,
             replace_with,
             s,
         )
@@ -272,7 +272,7 @@ class TestMainApplication:
 
     def test_update_data(self):
         '''
-        Test the scenario of updateing data
+        Test the scenario of updating data
         '''
         input_values = []
         output = []

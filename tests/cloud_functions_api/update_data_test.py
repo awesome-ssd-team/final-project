@@ -7,10 +7,10 @@ from scripts.cloud_functions_api import update_data
 
 @pytest.mark.usefixtures('create_a_testing_user_account')
 @pytest.mark.usefixtures('create_a_business_data_record')
-@pytest.mark.usefixtures('turncate_backend_users')
-@pytest.mark.usefixtures('turncate_backend_user_login_logs')
-@pytest.mark.usefixtures('turncate_backend_blocked_sessions')
-@pytest.mark.usefixtures('turncate_users')
+@pytest.mark.usefixtures('truncate_backend_users')
+@pytest.mark.usefixtures('truncate_backend_user_login_logs')
+@pytest.mark.usefixtures('truncate_backend_blocked_sessions')
+@pytest.mark.usefixtures('truncate_users')
 class TestUpdateData:
     '''The unit test cases group'''
 

@@ -6,8 +6,8 @@ import pytest
 from scripts.cloud_functions_api import setup_otp
 
 @pytest.mark.usefixtures('create_a_testing_user_account')
-@pytest.mark.usefixtures('turncate_backend_users')
-@pytest.mark.usefixtures('turncate_users')
+@pytest.mark.usefixtures('truncate_backend_users')
+@pytest.mark.usefixtures('truncate_users')
 class TestSetupOTP:
     '''The unit test cases group'''
 

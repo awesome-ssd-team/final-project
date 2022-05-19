@@ -6,8 +6,8 @@ import json
 import pytest
 import requests
 
-@pytest.mark.usefixtures('turncate_backend_users')
-@pytest.mark.usefixtures('turncate_users')
+@pytest.mark.usefixtures('truncate_backend_users')
+@pytest.mark.usefixtures('truncate_users')
 class TestGoogleCloudFunctions:
     '''The system integration test cases group'''
 

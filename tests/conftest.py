@@ -60,11 +60,11 @@ def clear_downloaded_excel_files():
             os.remove(f'{current_directory}/{f}')
 
 @pytest.fixture(scope='class')
-def turncate_backend_users():
+def truncate_backend_users():
     '''Clear all backend user records from the testing database'''
     BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
 
-    print(f'Turncating all user records from the {BACKEND_DATABASE}.users table.')
+    print(f'Truncating all user records from the {BACKEND_DATABASE}.users table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -76,11 +76,11 @@ def turncate_backend_users():
     conn.close()
 
 @pytest.fixture(scope='class')
-def turncate_backend_user_login_logs():
+def truncate_backend_user_login_logs():
     '''Clear all backend user login log records form the testing database'''
     BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
 
-    print(f'Turncating all user records from the {BACKEND_DATABASE}.user_login_logs table.')
+    print(f'Truncating all user records from the {BACKEND_DATABASE}.user_login_logs table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -92,11 +92,11 @@ def turncate_backend_user_login_logs():
     conn.close()
 
 @pytest.fixture(scope='class')
-def turncate_backend_blocked_sessions():
+def truncate_backend_blocked_sessions():
     '''Clear all backend blocked session records form the testing database'''
     BACKEND_DATABASE = os.environ.get('BACKEND_DATABASE')
 
-    print(f'Turncating all user records from the {BACKEND_DATABASE}.blocked_session table.')
+    print(f'Truncating all user records from the {BACKEND_DATABASE}.blocked_session table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -108,11 +108,11 @@ def turncate_backend_blocked_sessions():
     conn.close()
 
 @pytest.fixture(scope='class')
-def turncate_users():
+def truncate_users():
     '''Clear all user records from the testing database'''
     SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
-    print(f'Turncating all user records from the {SECURED_DATABASE}.users table.')
+    print(f'Truncating all user records from the {SECURED_DATABASE}.users table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -124,11 +124,11 @@ def turncate_users():
     conn.close()
 
 @pytest.fixture(scope='class')
-def turncate_business_data():
+def truncate_business_data():
     '''Clear all business data records from the testing database'''
     SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
-    print(f'Turncating all user records from the {SECURED_DATABASE}.business_data table.')
+    print(f'Truncating all user records from the {SECURED_DATABASE}.business_data table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
@@ -140,11 +140,11 @@ def turncate_business_data():
     conn.close()
 
 @pytest.fixture(scope='class')
-def turncate_business_data():
+def truncate_business_data():
     '''Clear all business data records from the testing database'''
     SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
-    print(f'Turncating all business data records from the {SECURED_DATABASE}.business_data table.')
+    print(f'Truncating all business data records from the {SECURED_DATABASE}.business_data table.')
 
     conn = _fetch_database_connection()
     cursor = conn.cursor(dictionary=True)
