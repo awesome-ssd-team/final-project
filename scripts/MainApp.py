@@ -17,6 +17,7 @@ from styleframe import StyleFrame, Styler
 
 class MainApp:
     '''The main application'''
+
     def __init__(self):
         # Initialize the session and user information
         now = datetime.now()
@@ -35,7 +36,29 @@ class MainApp:
             'is_admin': None
         }
         self.is_blocked = False
+        self.configs = {
+            'is_test': os.getenv('IS_TEST') is not None and os.getenv('IS_TEST') == '0',
+            'gcf': {
+                'base_url': os.getenv('BASE_URL'),
+                'register_user': os.getenv('REGISTER_USER_URL'),
+                'user_login': os.getenv('USER_LOGIN_URL'),
+                'verify_otp': os.getenv('VERIFY_OTP'),
+                'setup_otp': os.getenv('SETUP_OTP'),
+                'retrieve_data': os.getenv('RETRIEVE_DATA'),
+                'add_data': os.getenv('ADD_DATA'),
+                'update_data': os.getenv('UPDATE_DATA'),
+                'download_data': os.getenv('DOWNLOAD_DATA'),
+                'retrieve_log': os.getenv('RETRIEVE_LOG'),
+                'retrieve_user_data': os.getenv('RETRIEVE_LOG'),
+                'manage_user': os.getenv('MANAGE_USER'),
+            },
+        }
         self.homepage()
+
+    def _print_test_messages(self, payload):
+        '''Print messages for testing environment'''
+        if self.configs['is_test']:
+            print(payload)
 
     # Switch to different pages according to user action
     def switch_menu(self, activity, **kwargs):
@@ -126,7 +149,7 @@ class MainApp:
             }
             # Retrieving data from cloud function using user id
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_data_fx',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_data']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
@@ -217,7 +240,7 @@ class MainApp:
             }
 
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_log',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_log']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
@@ -282,7 +305,7 @@ class MainApp:
 
             # Saving the user data into database
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/register_user',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['register_user']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
@@ -316,7 +339,7 @@ class MainApp:
         #Display the input prompt for email and password
         while status_code != 200 and attempt < 3:
             email = input("Enter your email: ")
-            password = getpass(prompt="Enter your password: ")
+            password = getpass("Enter your password: ")
 
             http_payload = {
                 'email': email,
@@ -326,7 +349,7 @@ class MainApp:
 
             #Sending the payload to cloud function
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/user_login_fix',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['user_login']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
@@ -352,7 +375,7 @@ class MainApp:
                     }
 
                     http_response = requests.post(
-                        'https://us-central1-ssd-136542.cloudfunctions.net/verify_otp',
+                        f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['verify_otp']}",
                         headers={"Content-Type": "application/json"},
                         data=json.dumps(http_payload)  # possible request parameters
                     )
@@ -416,7 +439,7 @@ class MainApp:
 
                 # Getting the tfa secret saved in the database when setting up TFA
                 http_response = requests.post(
-                    'https://us-central1-ssd-136542.cloudfunctions.net/verify_otp',
+                    f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['verify_otp']}",
                     headers={"Content-Type": "application/json"},
                     data=json.dumps(http_payload)
                 )
@@ -431,6 +454,8 @@ class MainApp:
                 totp = pyotp.TOTP(tfa_secret)
                 passed = False
                 totp_attempt = 0
+
+                self._print_test_messages(f'OTP:{str(totp.now())}')
 
                 # User has 3 chances to imput the correct MFA code
                 while not passed and totp_attempt < 3:
@@ -493,8 +518,12 @@ class MainApp:
         print("Prepare your phone and be ready to scan an image with your authentication app.")
         print("After that, input the code to verify the setup.")
         input("Press enter to continue...")
-        # Show the QR code image to user to scan
-        img.show()
+
+        if not self.configs['is_test']:
+            # Show the QR code image to user to scan
+            img.show()
+
+        self._print_test_messages(f'OTP:{str(totp.now())}')
 
         passed = False
         attempt = 0
@@ -524,7 +553,7 @@ class MainApp:
         }
 
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/setup_otp',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['setup_otp']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps(http_payload)
         )
@@ -573,7 +602,7 @@ class MainApp:
 
             #Send payload to cloud function to add data for a specific user
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/add_data_fix',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['add_data']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
@@ -630,7 +659,10 @@ class MainApp:
 
                 data_id_select_passed = True
 
-            print()
+            if not self.configs['is_test']:
+                print()
+            else:
+                print('')
 
             # Loop until a valid update action item is received
             while not update_action:
@@ -662,7 +694,7 @@ class MainApp:
 
             # Sending request to cloud function to update the data
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/update_data_fix',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['update_data']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
@@ -724,7 +756,7 @@ class MainApp:
 
         # Sending request to cloud function to update data is_valid to false
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/update_data_fix',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['update_data']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps(http_payload)
         )
@@ -751,7 +783,7 @@ class MainApp:
 
             #Retrieving data from cloud function
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/download_data_fix',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['download_data']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
@@ -793,7 +825,7 @@ class MainApp:
     def manage_users(self):
 
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_user_data_fix',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_user_data']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps({})
         )
@@ -896,7 +928,7 @@ class MainApp:
         }
 
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/manage_user_fix',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['manage_user']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps(http_payload)  # possible request parameters
         )
@@ -908,6 +940,3 @@ class MainApp:
         input("Returning to homepage. Press enter to proceed.")
 
         return self.switch_menu(activity='action')
-
-
-

@@ -42,6 +42,23 @@ CREATE TABLE secured_test.users (
 	secondary_password   VARCHAR(6)  NOT NULL
  ) engine=InnoDB;
 
+ CREATE TABLE secured_test.business_data (
+  data_id varchar(36) NOT NULL,
+  user_id int unsigned NOT NULL,
+  data_value int NOT NULL,
+  data_details text NOT NULL,
+  is_valid tinyint(1) NOT NULL,
+  last_modified datetime NOT NULL,
+  PRIMARY KEY (data_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE secured_test.user_activity_log (
+  user_id int NOT NULL,
+  data_id int NOT NULL,
+  activity text NOT NULL,
+  last_modified datetime NOT NULL
+) ENGINE=InnoDB;
+
 CREATE INDEX fk_user_login_logs ON public_test.user_login_logs ( user_id );
 
 ALTER TABLE public_test.blocked_session ADD CONSTRAINT fk_blocked_session FOREIGN KEY ( session_id ) REFERENCES public_test.user_login_logs( session_id ) ON DELETE NO ACTION ON UPDATE NO ACTION;

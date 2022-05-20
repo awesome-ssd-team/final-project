@@ -7,10 +7,10 @@ import pytest
 from scripts.cloud_functions_api import user_login
 
 @pytest.mark.usefixtures('create_a_testing_user_account')
-@pytest.mark.usefixtures('turncate_backend_users')
-@pytest.mark.usefixtures('turncate_backend_user_login_logs')
-@pytest.mark.usefixtures('turncate_backend_blocked_sessions')
-@pytest.mark.usefixtures('turncate_users')
+@pytest.mark.usefixtures('truncate_backend_users')
+@pytest.mark.usefixtures('truncate_backend_user_login_logs')
+@pytest.mark.usefixtures('truncate_backend_blocked_sessions')
+@pytest.mark.usefixtures('truncate_users')
 class TestUserLogin:
     '''The unit test cases group'''
 
@@ -64,7 +64,7 @@ class TestUserLogin:
 
         login_attempt = 0
 
-        while login_attempt < 3:
+        while login_attempt < 4:
             print(f'Trying to login with {login_attempt + 1} attempt.')
 
             request = Mock(get_json=Mock(return_value=data), args=data)

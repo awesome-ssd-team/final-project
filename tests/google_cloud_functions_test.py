@@ -1,12 +1,13 @@
 # pylint: disable=no-self-use
 # pylint: disable=invalid-name
 '''The system integration test cases for Google Cloud Functions API'''
+import os
 import json
 import pytest
 import requests
 
-@pytest.mark.usefixtures('turncate_backend_users')
-@pytest.mark.usefixtures('turncate_users')
+@pytest.mark.usefixtures('truncate_backend_users')
+@pytest.mark.usefixtures('truncate_users')
 class TestGoogleCloudFunctions:
     '''The system integration test cases group'''
 
@@ -14,9 +15,10 @@ class TestGoogleCloudFunctions:
         ''''
         Test whether Google Cloud Functions has heart beat or not
         '''
-        http_response = requests.get(
-            'https://us-central1-ssd-136542.cloudfunctions.net/heart-beat'
-        )
+        BASE_URL = os.getenv('BASE_URL')
+        HEART_BEAT_URL = os.getenv('HEART_BEAT_URL')
+
+        http_response = requests.get(f'{BASE_URL}/{HEART_BEAT_URL}')
         response = http_response.text
 
         assert response is not None
@@ -28,6 +30,9 @@ class TestGoogleCloudFunctions:
         '''
         data = fake_user_data
 
+        BASE_URL = os.getenv('BASE_URL')
+        REGISTER_USER_URL = os.getenv('REGISTER_USER_URL')
+
         http_payload = {
             "full_name": data['full_name'],
             "email": data['email'],
@@ -36,7 +41,7 @@ class TestGoogleCloudFunctions:
         }
 
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/test_register_user',
+            f'{BASE_URL}/{REGISTER_USER_URL}',
             headers={"Content-Type": "application/json"},
             data=json.dumps(http_payload)
         )
