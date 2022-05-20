@@ -47,6 +47,10 @@ class MainApp:
                 'retrieve_data': os.getenv('RETRIEVE_DATA'),
                 'add_data': os.getenv('ADD_DATA'),
                 'update_data': os.getenv('UPDATE_DATA'),
+                'download_data': os.getenv('DOWNLOAD_DATA'),
+                'retrieve_log': os.getenv('RETRIEVE_LOG'),
+                'retrieve_user_data': os.getenv('RETRIEVE_LOG'),
+                'manage_user': os.getenv('MANAGE_USER'),
             },
         }
         self.homepage()
@@ -236,7 +240,7 @@ class MainApp:
             }
 
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_log',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_log']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)  # possible request parameters
             )
@@ -371,7 +375,7 @@ class MainApp:
                     }
 
                     http_response = requests.post(
-                        'https://us-central1-ssd-136542.cloudfunctions.net/verify_otp',
+                        f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['verify_otp']}",
                         headers={"Content-Type": "application/json"},
                         data=json.dumps(http_payload)  # possible request parameters
                     )
@@ -752,7 +756,7 @@ class MainApp:
 
         # Sending request to cloud function to update data is_valid to false
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/update_data_fix',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['update_data']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps(http_payload)
         )
@@ -779,7 +783,7 @@ class MainApp:
 
             #Retrieving data from cloud function
             http_response = requests.post(
-                'https://us-central1-ssd-136542.cloudfunctions.net/download_data_fix',
+                f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['download_data']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
             )
@@ -821,7 +825,7 @@ class MainApp:
     def manage_users(self):
 
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_user_data_fix',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_user_data']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps({})
         )
@@ -924,7 +928,7 @@ class MainApp:
         }
 
         http_response = requests.post(
-            'https://us-central1-ssd-136542.cloudfunctions.net/manage_user_fix',
+            f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['manage_user']}",
             headers={"Content-Type": "application/json"},
             data=json.dumps(http_payload)  # possible request parameters
         )
@@ -936,6 +940,3 @@ class MainApp:
         input("Returning to homepage. Press enter to proceed.")
 
         return self.switch_menu(activity='action')
-
-
-
