@@ -99,14 +99,23 @@ When user selects to logout, the application will clear the user information sto
 ## Administrator features
 
 The application also provides administrator features that allow administrators to monitor user activities and mange user privileges.
+Other than the above features which are available for the regular users, the admin user has two more features listed below:
 
 ### Manage users
 
-Administrtors can view user details and manage their roles in the admin portal. The user details are encrypted.
+Administrtors can view user details and manage their roles in the admin portal. 
+
+Once clicking into the Manage User page, a list of existing users will show.Some of the user's details (email and full_name) are encrypted.
+The admin can manage the user by:
+  - Activate/deactivate a user
+  - Update a regulare user as an admin user
 
 ### View user logs
 
 Administrators can view and monitor and user activities in the application. It is important to have enough logs and monitoring to detect suspicious activities.
+With the logs feature, the admin can:
+ - Monitor the activities' time to identify the suspicious activity. For example, if the data is being download after the working hours, the activity could be considered as suspicious.
+ - Monitor if a specific user has unusual behavior. For example, if huge amount of data is suddenly deleted by a specific user, then we can confirm with the user if the activities are expected.
 
 ## Steps forwards
 
