@@ -146,12 +146,14 @@ class MainApp:
             print('4. Download Data')
             print('5. Manage Users')
             print('6. View log')
+            print('7. Logout\n')
         else:
             print('4. Download Data')
+            print('5. Logout\n')
 
         user_action_input = '0'
 
-        available_menu = [1, 2, 3, 4, 5, 6] if self.user.get('is_admin') else [1, 2, 3, 4]
+        available_menu = [1, 2, 3, 4, 5, 6, 7] if self.user.get('is_admin') else [1, 2, 3, 4, 5]
 
         menu_dict = {
             '1': 'add',
@@ -159,12 +161,14 @@ class MainApp:
             '3': 'delete',
             '4': 'download',
             '5': 'manage_users',
-            '6': 'view_log'
+            '6': 'view_log',
+            '7': 'logout'
         } if self.user.get('is_admin') else {
             '1': 'add',
             '2': 'update',
             '3': 'delete',
-            '4': 'download'
+            '4': 'download',
+            '5': 'logout'
         }
 
         # Repeat until valid input
@@ -756,7 +760,7 @@ class MainApp:
         return self.switch_menu(activity='action')
 
     def manage_users(self):
-
+        '''Display the page where the admin can manage the users' account list'''
         http_response = requests.post(
             'https://us-central1-ssd-136542.cloudfunctions.net/retrieve_user_data_fix',
             headers={"Content-Type": "application/json"},
@@ -773,6 +777,45 @@ class MainApp:
 
         print(tabulate(printed_data, headers=printed_headers, tablefmt="pretty"))
 
+        print("What action you would like to take?")
+        # print('='*40)
+        print()
+        print('1. Manage User')
+        print('2. Back')
+
+        user_action_input = '0'
+
+        available_menu = [1, 2]
+
+        menu_dict = {
+            '1': 'manage',
+            '2': 'back',
+        }
+
+        # Repeat until valid input
+        select_main_menu_input_passed = False
+
+        while select_main_menu_input_passed is False:
+
+            user_action_input = input('Please select a menu: ')
+
+            if user_action_input.isdigit():
+                if int(user_action_input) not in available_menu:
+                    print("Selection is out of range. Aiming for the moon eh?")
+                    continue
+                else:
+                    select_main_menu_input_passed = True
+            elif not user_action_input.isdigit():
+                print("Selection should be numerical.")
+                continue
+            else:
+                print("I don't understand your selection =(")
+                continue
+
+        if user_action_input == '2':
+            return self.switch_menu(activity='action')
+
+        # Repeat until valid input
         user_selection_passed = False
 
         while user_selection_passed is False:
