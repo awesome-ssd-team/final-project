@@ -822,8 +822,11 @@ class MainApp:
         input('Press any key to continue...')
         return self.switch_menu(activity='action')
 
+    # Admin portal to manage user roles
     def manage_users(self):
+        '''Display the admin page to manage users'''
 
+        # Retrieves user data
         http_response = requests.post(
             f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['retrieve_user_data']}",
             headers={"Content-Type": "application/json"},
@@ -838,10 +841,12 @@ class MainApp:
 
         distinct_user_id = [str(i.get('user_id')) for i in data]
 
+        # Print out user data
         print(tabulate(printed_data, headers=printed_headers, tablefmt="pretty"))
 
         user_selection_passed = False
 
+        # Perform manage user actions
         while user_selection_passed is False:
             manage_user_id = input("Which user_id you want to manage? ")
 
@@ -859,6 +864,7 @@ class MainApp:
                 selected_user_data = i
                 break
 
+        # Clear the terminal
         os.system('cls' if os.name == 'nt' else 'clear')
 
         printed_data = [selected_user_data.values()]
@@ -886,6 +892,7 @@ class MainApp:
                 print("Selection is not recognized.")
                 continue
 
+        # 1 is to deactivate/activate users and 2 is to set/ remove the user as admin
         operation_dict = {
             "1": {
                 'column': 'is_active',
@@ -921,6 +928,7 @@ class MainApp:
             else:
                 confirmation_passed = True
 
+        # Writing the new values to the database
         http_payload = {
             'user_id': manage_user_id,
             'column': operation_data.get('column'),
@@ -930,13 +938,13 @@ class MainApp:
         http_response = requests.post(
             f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['manage_user']}",
             headers={"Content-Type": "application/json"},
-            data=json.dumps(http_payload)  # possible request parameters
+            data=json.dumps(http_payload)
         )
 
         response = json.loads(http_response.content)
-        status_code = response.get('code')
         message = response.get('message')
         print(message)
         input("Returning to homepage. Press enter to proceed.")
 
+        # Redirect the user back to homepage
         return self.switch_menu(activity='action')
