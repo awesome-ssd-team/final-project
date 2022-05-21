@@ -62,6 +62,8 @@ and security. The application should:
 
 The application is a command line application built in python. It makes use of Cloud Functions by Google Cloud Platform to handle the API calls and execute CRUD operations to the MYSQL databases hosted in AWS Relational Database Service (RDS).
 
+## Functions
+
 ### Register a new user
 
 As the application is started, the user can select to get registered. The application will ask the use to set the first and second passwords, as well as MFA. It is recommended for the user to set up MFA to enhance security. User can use OTP applications such as Google Authenticator to scan the QR coode displayed and entered the MFA code. If it is successful, the OTP secret will be saved to the user database for future authentication purpose.
@@ -78,19 +80,19 @@ In user main menu, the user can choose to add, update, delete or download the da
 
 User can perform addition of data into the database. The user only has to input the data value and data details. The data id will be automatically generated and the data is set to be valid by default.
 
-### Updating data
+#### Updating data
 
 User can choose to either update the data value or the data details of a valid data at each time. The values will be updated to the database.
 
-### Deleting data
+#### Deleting data
 
 User can delete the data by entering the data ID. However, due to data concerns (eg. accidental deletion), the deletion action is only marking the data as invalid but not actual deletion. The data will still be accessible in the database if needed.
 
-### Downloading data
+#### Downloading data
 
 User can select this option to download a copy of his/her valid data. The data will be exported in an excel format and downloaded to the current working directory. If no valid data is present, it will prompt the user there is no data to be downloaded and direct the user back to the main menu.
 
-### Logout
+#### Logout
 
 When user selects to logout, the application will clear the user information stored for the session and direct the user back to the login/register screen.
 
