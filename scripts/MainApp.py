@@ -49,7 +49,7 @@ class MainApp:
                 'update_data': os.getenv('UPDATE_DATA'),
                 'download_data': os.getenv('DOWNLOAD_DATA'),
                 'retrieve_log': os.getenv('RETRIEVE_LOG'),
-                'retrieve_user_data': os.getenv('RETRIEVE_LOG'),
+                'retrieve_user_data': os.getenv('RETRIEVE_USER_DATA'),
                 'manage_user': os.getenv('MANAGE_USER'),
             },
         }
@@ -181,6 +181,7 @@ class MainApp:
             print('4. Download Data')
             print('5. Manage Users')
             print('6. View log')
+            print('7. Logout\n')
         else:
             print('4. Download Data')
             print('5. Logout\n')
@@ -188,7 +189,7 @@ class MainApp:
 
         user_action_input = '0'
 
-        available_menu = [1, 2, 3, 4, 5, 6] if self.user.get('is_admin') else [1, 2, 3, 4, 5]
+        available_menu = [1, 2, 3, 4, 5, 6, 7] if self.user.get('is_admin') else [1, 2, 3, 4, 5]
 
         menu_dict = {
             '1': 'add',
@@ -196,7 +197,8 @@ class MainApp:
             '3': 'delete',
             '4': 'download',
             '5': 'manage_users',
-            '6': 'view_log'
+            '6': 'view_log',
+            '7': 'logout'
         } if self.user.get('is_admin') else {
             '1': 'add',
             '2': 'update',
@@ -349,6 +351,7 @@ class MainApp:
 
             #Sending the payload to cloud function
             http_response = requests.post(
+                #'https://us-central1-ssd-136542.cloudfunctions.net/user_login_fix',
                 f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['user_login']}",
                 headers={"Content-Type": "application/json"},
                 data=json.dumps(http_payload)
@@ -375,6 +378,7 @@ class MainApp:
                     }
 
                     http_response = requests.post(
+                        #'https://us-central1-ssd-136542.cloudfunctions.net/verify_otp',
                         f"{self.configs['gcf']['base_url']}/{self.configs['gcf']['verify_otp']}",
                         headers={"Content-Type": "application/json"},
                         data=json.dumps(http_payload)  # possible request parameters
@@ -806,7 +810,7 @@ class MainApp:
                 df.rename(columns= {"data_id":"Data ID","data_details":"Data Details","data_value":"Data Value","created_at":"Created At","last_modified":"Last modified"}, inplace=True)
                 df.style.set_properties(align="left")
                 # Write to excel with user name and timestamp as filename
-                timestamp = datetime.now()
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 excel_writer = StyleFrame.ExcelWriter(f'{self.user["name"]}_{timestamp}.xlsx')
                 # Style the excel
                 sf = StyleFrame(df)
@@ -843,6 +847,36 @@ class MainApp:
 
         # Print out user data
         print(tabulate(printed_data, headers=printed_headers, tablefmt="pretty"))
+
+        print("What action you would like to take?")
+        print()
+        print('1. Manage User')
+        print('2. Back')
+        user_action_input = '0'
+        available_menu = [1, 2]
+        menu_dict = {
+            '1': 'manage',
+            '2': 'back',
+        }
+        # Repeat until valid input
+        select_main_menu_input_passed = False
+        while select_main_menu_input_passed is False:
+            user_action_input = input('Please select a menu: ')
+            if user_action_input.isdigit():
+                if int(user_action_input) not in available_menu:
+                    print("Selection is out of range. Aiming for the moon eh?")
+                    continue
+                else:
+                    select_main_menu_input_passed = True
+            elif not user_action_input.isdigit():
+                print("Selection should be numerical.")
+                continue
+            else:
+                print("I don't understand your selection =(")
+                continue
+        if user_action_input == '2':
+            return self.switch_menu(activity='action')
+
 
         user_selection_passed = False
 
