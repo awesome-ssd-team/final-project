@@ -1,5 +1,6 @@
 import os
 import mysql.connector
+import uuid
 
 def main(request):
     request_json = request.get_json()
@@ -19,25 +20,30 @@ def main(request):
     cursor = conn.cursor(dictionary=True)
 
     # Extract passed user data
-    otp_secret = request_json.get('otp_secret')
-    user_email = request_json.get('email')
+    user_id = request_json.get('user_id')
 
+    # Get valid business data by that particular user
     query = (
         f"""
-        UPDATE secured.users
-        SET
-            tfa_secret = '{otp_secret}',
-            is_tfa_enabled = TRUE
-        WHERE
-            email = '{user_email}';
+        SELECT
+            data_id,
+            data_value,
+            data_details,
+            is_valid,
+            created_at,
+            modified_at as last_modified
+        FROM secured.business_data_fix
+        WHERE user_id = '{user_id}' AND is_valid = 1;
         """
     )
 
     cursor.execute(query)
-    conn.commit()
+    view_data_result = cursor.fetchall()
+
     conn.close()
 
     return {
         'code': 200,
-        'message': 'OTP secrest is saved.'
+        'message': 'Business data fetched',
+        'data':view_data_result
     }
