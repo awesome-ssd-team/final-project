@@ -1,24 +1,19 @@
-# pylint: disable=invalid-name
-# pylint: disable=duplicate-code
-'''The Cloud Functions module for handling setting up OTP'''
 import os
 import mysql.connector
 
 def main(request):
-    '''The main function of handling the setup OTP request'''
     request_json = request.get_json()
 
     # Connect to MySQL
     MYSQL_HOST = os.environ.get('MYSQL_HOST')
     MYSQL_USERNAME = os.environ.get('MYSQL_USERNAME')
     MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
-    SECURED_DATABASE = os.environ.get('SECURED_DATABASE')
 
     conn = mysql.connector.connect(
         host=MYSQL_HOST,
         user=MYSQL_USERNAME,
         password=MYSQL_PASSWORD,
-        database=SECURED_DATABASE,
+        database='secured'
     )
 
     cursor = conn.cursor(dictionary=True)
@@ -29,7 +24,7 @@ def main(request):
 
     query = (
         f"""
-        UPDATE {SECURED_DATABASE}.users
+        UPDATE secured.users
         SET
             tfa_secret = '{otp_secret}',
             is_tfa_enabled = TRUE

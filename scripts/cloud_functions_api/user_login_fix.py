@@ -30,9 +30,9 @@ def main(request):
     password = request_json.get('password')
     session_id = request_json.get('session_id')
 
-    # Comment out below lines because they are unused variables
-    # session_start_at_str = request_json.get('session_start_at_str')
-    # session_expired_at_str = request_json.get('session_expired_at_str')
+    code = 0
+    message = None
+    data = None
 
     # Get entered user_id & name (if any)
     query = (
@@ -40,25 +40,27 @@ def main(request):
         SELECT
             user_id,
             SUBSTRING_INDEX(full_name, ' ', 1) AS user_name,
-            is_tfa_enabled
+            is_tfa_enabled,
+            is_admin
         FROM {SECURED_DATABASE}.users
-        WHERE email = '{email}';
+        WHERE email = '{email}'
+        AND is_active = TRUE;
         """
     )
 
     cursor.execute(query)
     user_id_result = cursor.fetchone()
+
+    if user_id_result is None:
+        # No record matches with user inputted email
+        code = 406
+        message = 'No record matches.'
+
     user_id = user_id_result.get('user_id') if user_id_result else None
     user_name = user_id_result.get('user_name') if user_id_result else None
     is_tfa_enabled = bool(user_id_result.get('is_tfa_enabled')) if user_id_result else None
+    is_admin = bool(user_id_result.get('is_admin')) if user_id_result else None
     user_id_value = user_id if user_id is not None else 'NULL'
-
-    #No record matches with user inputted email
-    if user_id == None or user_name == None:
-        return {
-        'code': 406,
-        'message': 'The email is not correct.'
-    }
 
     # Add attempt to user_login_logs
     query = (
@@ -90,54 +92,60 @@ def main(request):
 
     # Check if user_id is blocked due to malicious login attempt
     if is_blocked:
-        return {
-            'code': 401,
-            'message': ("You or the credentials you are using is currently being blocked. "
+        code = 403
+        message = ("You or the credentials you are using is currently being blocked. "
                         "Please try again later.")
-        }
+
+        # return {
+        #     'code': 403,
+        #     'message': ("You or the credentials you are using is currently being blocked. "
+        #                 "Please try again later.")
+        # }
 
     # Check if credentials are correct
-    query = (
-        f"""
-            SELECT (MD5('{password}') = A.password) AS authenticated
-            FROM {BACKEND_DATABASE}.users A
-                LEFT JOIN {SECURED_DATABASE}.users B
-                ON A.user_id = B.user_id
-            WHERE A.email = AES_ENCRYPT('{email}', B.secondary_password);
-        """
-    )
-
-    cursor.execute(query)
-    query_result = cursor.fetchone()
-    authenticated = bool(query_result.get('authenticated')) if query_result else False
-
-    if authenticated:
-        # Generate token & insert into table as an acknowledge token
-        auth_token = str(uuid.uuid4())
-
+    if code == 0:
         query = (
             f"""
-            INSERT INTO {SECURED_DATABASE}.user_login_token (auth_token, user_id, expired_at)
-            VALUES (
-                '{auth_token}', {user_id}, CURRENT_TIMESTAMP() + INTERVAL 15 MINUTE
-            );
+                SELECT (MD5('{password}') = A.password) AS authenticated
+                FROM {BACKEND_DATABASE}.users A
+                    LEFT JOIN {SECURED_DATABASE}.users B
+                    ON A.user_id = B.user_id
+                WHERE A.email = AES_ENCRYPT('{email}', B.secondary_password);
             """
         )
 
         cursor.execute(query)
-        conn.commit()
-        conn.close()
+        query_result = cursor.fetchone()
+        authenticated = bool(query_result.get('authenticated')) if query_result else False
 
-        return {
-            'code': 200,
-            'message': f'Welcome {user_name}!',
-            'data': {
+        if authenticated:
+            # Generate token & insert into table as an acknowledge token
+            auth_token = str(uuid.uuid4())
+
+            query = (
+                f"""
+                INSERT INTO {SECURED_DATABASE}.user_login_token (auth_token, user_id, expired_at)
+                VALUES (
+                    '{auth_token}', {user_id}, CURRENT_TIMESTAMP() + INTERVAL 15 MINUTE
+                );
+                """
+            )
+
+            cursor.execute(query)
+            conn.commit()
+
+            code = 200
+            message = f'Welcome {user_name}!'
+            data = {
                 "auth_token": auth_token,
                 "user_id": user_id,
                 "user_name": user_name,
-                "is_tfa_enabled": is_tfa_enabled
+                "is_tfa_enabled": is_tfa_enabled,
+                "is_admin": is_admin
             }
-        }
+        else:
+            code = 404
+            message = "Credentials are not recognized..."
 
     # Check if attempt by device >= 3. Add to block if yes.
     query = (
@@ -179,9 +187,13 @@ def main(request):
         cursor.execute(query)
         conn.commit()
 
+        code = 401
+        message = 'Maximum attempt, you get temporary ban.'
+
     conn.close()
 
     return {
-        'code': 406,
-        'message': 'The credentials entered is not recognized or you are being blocked'
+        'code': code,
+        'message': message,
+        'data': data
     }
